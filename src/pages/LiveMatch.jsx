@@ -93,20 +93,34 @@ const LiveMatch = () => {
     const [match, setMatch] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isFallbackData, setIsFallbackData] = useState(false);
 
     useEffect(() => {
         const fetchLiveMatch = async () => {
             try {
-                const res = await api.get('/matches/live');
-                const currentMatch = (res.data?.matches || []).find((item) => String(item.fixtureId) === String(fixtureId));
+                const liveRes = await api.get('/matches/live').catch(() => ({ data: { matches: [] } }));
+                const currentLiveMatch = (liveRes.data?.matches || []).find((item) => String(item.fixtureId) === String(fixtureId));
 
-                if (!currentMatch) {
-                    setMatch(null);
-                    setError('Ce match n est plus en direct pour le moment.');
-                } else {
-                    setMatch(currentMatch);
+                if (currentLiveMatch) {
+                    setMatch(currentLiveMatch);
+                    setIsFallbackData(false);
                     setError('');
+                    return;
                 }
+
+                const matchesRes = await api.get('/matches').catch(() => ({ data: [] }));
+                const fallbackMatch = (matchesRes.data || []).find((item) => String(item.fixtureId) === String(fixtureId));
+
+                if (fallbackMatch) {
+                    setMatch(fallbackMatch);
+                    setIsFallbackData(true);
+                    setError('');
+                    return;
+                }
+
+                setMatch(null);
+                setIsFallbackData(false);
+                setError('Ce match n est plus disponible pour le moment.');
             } catch (err) {
                 setError(err.response?.data?.message || 'Impossible de charger le direct.');
             } finally {
@@ -122,6 +136,10 @@ const LiveMatch = () => {
 
     const timeline = buildGoalTimeline(match?.goals, match?.teamHome, match?.teamAway);
     const featuredPlayers = match?.topPlayers?.slice(0, 3) || [];
+    const isLive = match?.status === 'live' && !isFallbackData;
+    const headerStatus = isLive
+        ? (match?.currentMinute ? `En direct ${match.currentMinute}'` : 'En direct')
+        : 'Dernier etat connu';
 
     return (
         <div className="min-h-[calc(100vh-80px)] bg-[radial-gradient(circle_at_top,rgba(111,219,134,0.12),transparent_24%),linear-gradient(180deg,#0d2516_0%,#07140c_72%)] px-4 py-8 sm:px-5 sm:py-10">
@@ -131,7 +149,7 @@ const LiveMatch = () => {
                         <div className="text-xs font-bold uppercase tracking-[0.34em] text-[#7dc38d]">live center</div>
                         <h1 className="mt-3 text-4xl font-black text-white sm:text-5xl">Suivre maintenant</h1>
                         <div className="mt-3 text-base text-[#9eb8a5]">
-                            {match?.status === 'live' ? 'Match en direct' : 'Direct temporairement indisponible'}
+                            {headerStatus}
                             {match?.groupName ? ` • ${match.groupName}` : ''}
                         </div>
                     </div>
@@ -166,6 +184,12 @@ const LiveMatch = () => {
                     </div>
                 ) : match ? (
                     <div className="space-y-6">
+                        {isFallbackData ? (
+                            <div className="rounded-[24px] border border-[#325c3d] bg-[rgba(12,35,20,0.68)] px-4 py-4 text-sm text-[#d9eadc] shadow-[0_20px_50px_-35px_rgba(0,0,0,0.45)]">
+                                Le flux live temps reel n est pas disponible pour ce match. Cette page affiche le dernier etat connu enregistre sur le site.
+                            </div>
+                        ) : null}
+
                         <section className="overflow-hidden rounded-[34px] border border-[#20482c] bg-[linear-gradient(180deg,rgba(5,18,11,0.9),rgba(7,20,12,0.96))] shadow-[0_35px_110px_-60px_rgba(0,0,0,0.55)]">
                             <div className="relative overflow-hidden px-5 py-6 sm:px-8 sm:py-8">
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_105%,rgba(111,219,134,0.25),transparent_32%),radial-gradient(circle_at_20%_48%,rgba(111,219,134,0.10),transparent_18%),radial-gradient(circle_at_80%_48%,rgba(111,219,134,0.10),transparent_18%)]" />
@@ -176,8 +200,8 @@ const LiveMatch = () => {
                                     <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#76b584]">
                                         {match.groupName || match.competition || 'World Cup 2026'}
                                     </div>
-                                    <div className="rounded-full bg-[linear-gradient(135deg,#ff513c,#ff1538)] px-5 py-2 text-sm font-black uppercase tracking-[0.24em] text-white shadow-[0_0_30px_rgba(255,59,59,0.35)]">
-                                        live
+                                    <div className={`rounded-full px-5 py-2 text-sm font-black uppercase tracking-[0.24em] text-white ${isLive ? 'bg-[linear-gradient(135deg,#ff513c,#ff1538)] shadow-[0_0_30px_rgba(255,59,59,0.35)]' : 'bg-[linear-gradient(135deg,#52705a,#314637)]'}`}>
+                                        {isLive ? 'live' : 'resume'}
                                     </div>
                                 </div>
 
@@ -194,13 +218,17 @@ const LiveMatch = () => {
 
                                     <div className="text-center">
                                         <div className="mx-auto mb-4 inline-flex rounded-[20px] border border-[#295437] bg-[rgba(12,35,20,0.88)] px-5 py-3 text-2xl font-black text-[#a8efb6] shadow-[0_16px_40px_-24px_rgba(111,219,134,0.35)]">
-                                            {match.currentMinute ? `${match.currentMinute}'` : 'live'}
+                                            {isLive
+                                                ? (match.currentMinute ? `${match.currentMinute}'` : 'live')
+                                                : (match.status === 'finished' ? 'FT' : (match.currentMinute ? `${match.currentMinute}'` : 'resume'))}
                                         </div>
                                         <div className="font-display text-[5rem] leading-none text-white sm:text-[6rem]">
                                             {match.scoreHome ?? 0} - {match.scoreAway ?? 0}
                                         </div>
                                         <div className="mt-4 text-lg text-[#93b59b]">
-                                            {match.currentMinute ? `Minute ${match.currentMinute}` : 'Match en direct'}
+                                            {isLive
+                                                ? (match.currentMinute ? `Minute ${match.currentMinute}` : 'Match en direct')
+                                                : (match.status === 'finished' ? 'Match termine' : 'Dernier etat connu')}
                                         </div>
                                     </div>
 
@@ -318,7 +346,7 @@ const LiveMatch = () => {
                                         <InfoTile label="Date" value={formatMatchDate(match.matchDate)} />
                                         <InfoTile label="Heure" value={formatMatchTime(match.matchDate)} />
                                         <InfoTile label="Competition" value={match.competition || 'World Cup 2026'} />
-                                        <InfoTile label="Statut" value={match.currentMinute ? `En direct ${match.currentMinute}'` : 'En direct'} />
+                                        <InfoTile label="Statut" value={headerStatus} />
                                         <InfoTile label="Buteurs" value={String(match.goals?.length || 0)} />
                                     </div>
                                 </div>
