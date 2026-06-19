@@ -242,7 +242,7 @@ const MatchDetailCard = ({ match, index }) => (
                 </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap items-center gap-2">
                 <div className="rounded-full bg-[#e7f7ea] px-3 py-1 text-[11px] font-bold text-[#1f7a36] sm:text-xs">
                     Buteurs: {match.goals?.length || 0}
                 </div>
@@ -252,6 +252,14 @@ const MatchDetailCard = ({ match, index }) => (
                 <div className="rounded-full bg-[#103a1f] px-3 py-1 text-[11px] font-bold text-white sm:text-xs">
                     MVP: {match.manOfTheMatch?.name || 'en attente'}
                 </div>
+                {match.status === 'live' && match.fixtureId ? (
+                    <Link
+                        to={`/live/${match.fixtureId}`}
+                        className="inline-flex items-center rounded-full border border-[#1f7a36] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#256f38] sm:text-xs"
+                    >
+                        Suivre maintenant
+                    </Link>
+                ) : null}
             </div>
 
             {match.goals?.length > 0 && (
@@ -673,6 +681,7 @@ const Home = () => {
 };
 
 export default Home;
+
 
 
 

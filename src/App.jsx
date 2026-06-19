@@ -9,6 +9,7 @@ import Matches from './pages/Matches';
 import MyPredictions from './pages/MyPredictions';
 import Leaderboard from './pages/Leaderboard';
 import PredictionHub from './pages/PredictionHub';
+import LiveMatch from './pages/LiveMatch';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/live/:fixtureId" element={<LiveMatch />} />
               
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
