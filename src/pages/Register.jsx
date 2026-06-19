@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { getApiErrorMessage } from '../services/api';
 
 const Register = () => {
     const [name, setName] = useState('');
@@ -19,7 +20,7 @@ const Register = () => {
             await register(name, email, password);
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Une erreur est survenue');
+            setError(getApiErrorMessage(err));
         }
     };
 
@@ -101,3 +102,4 @@ const Register = () => {
 };
 
 export default Register;
+

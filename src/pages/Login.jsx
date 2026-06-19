@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { getApiErrorMessage } from '../services/api';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -19,7 +20,7 @@ const Login = () => {
             await login(email, password);
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Une erreur est survenue');
+            setError(getApiErrorMessage(err));
         }
     };
 
@@ -156,3 +157,4 @@ const Login = () => {
 };
 
 export default Login;
+

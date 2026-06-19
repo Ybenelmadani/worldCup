@@ -27,7 +27,11 @@ const getStatsSummary = (match) => {
     return null;
 };
 
-const getStandingsMessage = (footballData) => {
+const getStandingsMessage = (footballData, apiUnavailable) => {
+    if (apiUnavailable) {
+        return 'Le front ne parvient pas a joindre le backend. Verifie VITE_API_URL dans le frontend et FRONTEND_URL dans le backend.';
+    }
+
     if (!footballData.competition) {
         return 'Le backend n a pas encore recu les donnees de classement depuis football-data.org.';
     }
@@ -383,15 +387,24 @@ const Home = () => {
         scorers: [],
         requestInfo: null
     });
+    const [apiStatus, setApiStatus] = useState({
+        overviewUnavailable: false,
+        footballDataUnavailable: false
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchHomeData = async () => {
             try {
                 const [overviewRes, footballDataRes] = await Promise.all([
-                    api.get('/matches/overview').catch(() => ({ data: null })),
-                    api.get('/matches/football-data/worldcup').catch(() => ({ data: null }))
+                    api.get('/matches/overview').catch((error) => ({ data: null, error })),
+                    api.get('/matches/football-data/worldcup').catch((error) => ({ data: null, error }))
                 ]);
+
+                setApiStatus({
+                    overviewUnavailable: Boolean(overviewRes.error),
+                    footballDataUnavailable: Boolean(footballDataRes.error)
+                });
 
                 if (overviewRes.data) {
                     setOverview(overviewRes.data);
@@ -417,6 +430,7 @@ const Home = () => {
     const standingsToDisplay = footballData.standings;
     const topScorers = footballData.scorers.slice(0, 6);
     const rankedPlayers = overview.topPlayers.slice(0, 6);
+    const homeApiUnavailable = apiStatus.overviewUnavailable && apiStatus.footballDataUnavailable;
 
     return (
         <div className="min-h-[calc(100vh-64px)] bg-[#123b1f]">
@@ -481,7 +495,9 @@ const Home = () => {
 
                             {matchesToDisplay.length === 0 ? (
                                 <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
-                                    Aucun match programme sur les {overview.rangeDays || 3} prochains jours.
+                                    {homeApiUnavailable
+                                        ? 'Connexion au backend impossible pour charger les matchs.'
+                                        : `Aucun match programme sur les ${overview.rangeDays || 3} prochains jours.`}
                                 </div>
                             ) : (
                                 <div className="grid gap-6">
@@ -509,7 +525,7 @@ const Home = () => {
                                             aucun classement charge
                                         </div>
                                         <div className="mt-3 text-base leading-7 text-[#54705c]">
-                                            {getStandingsMessage(footballData)}
+                                            {getStandingsMessage(footballData, apiStatus.footballDataUnavailable)}
                                         </div>
                                     </div>
                                 ) : (
@@ -533,7 +549,9 @@ const Home = () => {
 
                             {topScorers.length === 0 ? (
                                 <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
-                                    Meilleurs buteurs indisponibles pour le moment.
+                                    {apiStatus.footballDataUnavailable
+                                        ? 'Les meilleurs buteurs sont indisponibles car le backend ne repond pas.'
+                                        : 'Meilleurs buteurs indisponibles pour le moment.'}
                                 </div>
                             ) : (
                                 <div className="grid gap-4 lg:grid-cols-2">
@@ -557,7 +575,9 @@ const Home = () => {
 
                             {rankedPlayers.length === 0 ? (
                                 <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
-                                    Les notes joueurs apparaitront des que le backend recoit plus de statistiques.
+                                    {apiStatus.overviewUnavailable
+                                        ? 'Les notes joueurs sont indisponibles car le backend ne repond pas.'
+                                        : 'Les notes joueurs apparaitront des que le backend recoit plus de statistiques.'}
                                 </div>
                             ) : (
                                 <div className="grid gap-4 lg:grid-cols-2">
@@ -575,3 +595,6 @@ const Home = () => {
 };
 
 export default Home;
+
+
+
