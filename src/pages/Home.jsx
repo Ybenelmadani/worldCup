@@ -15,13 +15,37 @@ const formatMatchDate = (date) => new Date(date).toLocaleDateString('fr-FR', {
     month: 'short'
 });
 
+const getMatchStatusLabel = (match) => {
+    if (match.status === 'live') {
+        return match.currentMinute ? `live ${match.currentMinute}'` : 'live';
+    }
+
+    return match.status === 'upcoming'
+        ? `${formatMatchDate(match.matchDate)} ${formatMatchTime(match.matchDate)}`
+        : match.status;
+};
+
+const getMatchCenterLabel = (match) => {
+    if (match.status === 'upcoming') {
+        return 'coup d envoi';
+    }
+
+    if (match.status === 'live') {
+        return match.currentMinute ? `${match.currentMinute}'` : 'live';
+    }
+
+    return 'resultat';
+};
+
 const getStatsSummary = (match) => {
     if (match.status === 'upcoming') {
         return null;
     }
 
     if ((match.topPlayers?.length || 0) === 0 && (match.goals?.length || 0) === 0) {
-        return 'Les stats joueurs ne sont pas encore revenues pour cette rencontre.';
+        return match.status === 'live'
+            ? 'Le match est en direct, les statistiques detaillees arrivent au fil de la rencontre.'
+            : 'Les stats joueurs ne sont pas encore revenues pour cette rencontre.';
     }
 
     return null;
@@ -168,8 +192,12 @@ const MatchDetailCard = ({ match, index }) => (
                 <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#66806d] sm:text-xs sm:tracking-[0.28em]">
                     {match.groupName || match.stage || 'World Cup 2026'}
                 </div>
-                <div className="rounded-full border border-[#cfe5cf] bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#3f5f49] sm:px-3 sm:text-xs sm:tracking-[0.2em]">
-                    {match.status === 'upcoming' ? `${formatMatchDate(match.matchDate)} ${formatMatchTime(match.matchDate)}` : match.status}
+                <div className={`rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] sm:px-3 sm:text-xs sm:tracking-[0.2em] ${
+                    match.status === 'live'
+                        ? 'border-[#1f7a36] bg-[#1f7a36] text-white'
+                        : 'border-[#cfe5cf] bg-white text-[#3f5f49]'
+                }`}>
+                    {getMatchStatusLabel(match)}
                 </div>
             </div>
         </div>
@@ -190,7 +218,7 @@ const MatchDetailCard = ({ match, index }) => (
 
                 <div className="rounded-[24px] bg-[#1f7a36] px-4 py-4 text-center text-white shadow-xl shadow-green-900/20 sm:rounded-[26px] sm:px-5">
                     <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#d8f5dc] sm:text-[10px] sm:tracking-[0.28em]">
-                        {match.status === 'upcoming' ? 'coup d envoi' : 'resultat'}
+                        {getMatchCenterLabel(match)}
                     </div>
                     <div className="mt-2 font-display text-[2.6rem] uppercase leading-none sm:text-4xl">
                         {match.status === 'upcoming'
@@ -387,9 +415,14 @@ const Home = () => {
         scorers: [],
         requestInfo: null
     });
+    const [liveCenter, setLiveCenter] = useState({
+        generatedAt: null,
+        matches: []
+    });
     const [apiStatus, setApiStatus] = useState({
         overviewUnavailable: false,
-        footballDataUnavailable: false
+        footballDataUnavailable: false,
+        liveUnavailable: false
     });
     const [loading, setLoading] = useState(true);
 
@@ -401,10 +434,11 @@ const Home = () => {
                     api.get('/matches/football-data/worldcup').catch((error) => ({ data: null, error }))
                 ]);
 
-                setApiStatus({
+                setApiStatus((current) => ({
+                    ...current,
                     overviewUnavailable: Boolean(overviewRes.error),
                     footballDataUnavailable: Boolean(footballDataRes.error)
-                });
+                }));
 
                 if (overviewRes.data) {
                     setOverview(overviewRes.data);
@@ -420,13 +454,37 @@ const Home = () => {
             }
         };
 
+        const fetchLiveData = async () => {
+            try {
+                const liveRes = await api.get('/matches/live').catch((error) => ({ data: null, error }));
+
+                setApiStatus((current) => ({
+                    ...current,
+                    liveUnavailable: Boolean(liveRes.error)
+                }));
+
+                if (liveRes.data) {
+                    setLiveCenter(liveRes.data);
+                }
+            } catch (error) {
+                console.error('Error fetching live data', error);
+            }
+        };
+
         fetchHomeData();
+        fetchLiveData();
+
+        const liveInterval = window.setInterval(fetchLiveData, 30000);
+
+        return () => {
+            window.clearInterval(liveInterval);
+        };
     }, []);
 
     const matchesToDisplay = footballData.matches.length > 0
         ? mergeMatchCollections(footballData.matches, overview.matches)
         : overview.matches;
-    const featuredMatches = matchesToDisplay.slice(0, 2);
+    const liveMatches = liveCenter.matches || [];
     const standingsToDisplay = footballData.standings;
     const topScorers = footballData.scorers.slice(0, 6);
     const rankedPlayers = overview.topPlayers.slice(0, 6);
@@ -472,7 +530,7 @@ const Home = () => {
                                     className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/15 bg-[rgba(7,20,12,0.48)] px-5 py-3 text-sm font-bold uppercase tracking-[0.24em] text-white backdrop-blur-md transition hover:bg-[rgba(7,20,12,0.68)]"
                                 >
                                     <span>Voir plus</span>
-                                    <span className="text-lg leading-none">↓</span>
+                                    <span className="text-lg leading-none">v</span>
                                 </motion.a>
                             </motion.div>
                         </div>
@@ -487,6 +545,26 @@ const Home = () => {
                     </div>
                 ) : (
                     <div className="space-y-20">
+                        {liveMatches.length > 0 && (
+                            <section>
+                                <SectionHeader
+                                    eyebrow="00"
+                                    title="Matchs en direct"
+                                    subtitle="Cette section se rafraichit automatiquement toutes les 30 secondes pour suivre les scores, minutes et statistiques sans sauvegarder le live dans la base locale."
+                                />
+
+                                <div className="grid gap-6">
+                                    {liveMatches.map((match, index) => (
+                                        <MatchDetailCard
+                                            key={`live-${match.fixtureId || `${match.teamHome}-${match.teamAway}-${index}`}`}
+                                            match={match}
+                                            index={index}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
                         <section>
                             <SectionHeader
                                 eyebrow="01"
@@ -595,6 +673,14 @@ const Home = () => {
 };
 
 export default Home;
+
+
+
+
+
+
+
+
 
 
 
