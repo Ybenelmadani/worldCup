@@ -163,36 +163,36 @@ const MatchDetailCard = ({ match, index }) => (
         transition={{ duration: 0.45, delay: index * 0.06 }}
         className="overflow-hidden rounded-[34px] border border-[#d8ead8] bg-white shadow-[0_35px_110px_-60px_rgba(16,58,31,0.18)]"
     >
-        <div className="border-b border-[#d8ead8] bg-[linear-gradient(120deg,#eef8ee,#f8fcf7)] px-6 py-4">
+        <div className="border-b border-[#d8ead8] bg-[linear-gradient(120deg,#eef8ee,#f8fcf7)] px-4 py-3 sm:px-6 sm:py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#66806d]">
+                <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#66806d] sm:text-xs sm:tracking-[0.28em]">
                     {match.groupName || match.stage || 'World Cup 2026'}
                 </div>
-                <div className="rounded-full border border-[#cfe5cf] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#3f5f49]">
+                <div className="rounded-full border border-[#cfe5cf] bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#3f5f49] sm:px-3 sm:text-xs sm:tracking-[0.2em]">
                     {match.status === 'upcoming' ? `${formatMatchDate(match.matchDate)} ${formatMatchTime(match.matchDate)}` : match.status}
                 </div>
             </div>
         </div>
 
-        <div className="px-6 py-6">
-            <div className="grid items-center gap-5 md:grid-cols-[1fr_auto_1fr]">
+        <div className="px-4 py-5 sm:px-6 sm:py-6">
+            <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr] md:gap-5">
                 <div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
                         <TeamBadge src={match.flagHome} alt={match.teamHome} />
                         <div>
-                            <div className="text-xl font-black text-[#103a1f] md:text-2xl">{match.teamHome}</div>
-                            <div className="mt-1 text-xs font-bold uppercase tracking-[0.22em] text-[#66806d]">
+                            <div className="text-[1rem] font-black text-[#103a1f] sm:text-xl md:text-2xl">{match.teamHome}</div>
+                            <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#66806d] sm:text-xs sm:tracking-[0.22em]">
                                 equipe 1
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-[26px] bg-[#1f7a36] px-5 py-4 text-center text-white shadow-xl shadow-green-900/20">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#d8f5dc]">
+                <div className="rounded-[24px] bg-[#1f7a36] px-4 py-4 text-center text-white shadow-xl shadow-green-900/20 sm:rounded-[26px] sm:px-5">
+                    <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#d8f5dc] sm:text-[10px] sm:tracking-[0.28em]">
                         {match.status === 'upcoming' ? 'coup d envoi' : 'resultat'}
                     </div>
-                    <div className="mt-2 font-display text-4xl uppercase leading-none">
+                    <div className="mt-2 font-display text-[2.6rem] uppercase leading-none sm:text-4xl">
                         {match.status === 'upcoming'
                             ? formatMatchTime(match.matchDate)
                             : `${match.scoreHome ?? 0} - ${match.scoreAway ?? 0}`}
@@ -202,8 +202,8 @@ const MatchDetailCard = ({ match, index }) => (
                 <div className="md:text-right">
                     <div className="flex items-center gap-4 md:justify-end">
                         <div className="md:order-1">
-                            <div className="text-xl font-black text-[#103a1f] md:text-2xl">{match.teamAway}</div>
-                            <div className="mt-1 text-xs font-bold uppercase tracking-[0.22em] text-[#66806d]">
+                            <div className="text-[1rem] font-black text-[#103a1f] sm:text-xl md:text-2xl">{match.teamAway}</div>
+                            <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#66806d] sm:text-xs sm:tracking-[0.22em]">
                                 equipe 2
                             </div>
                         </div>
@@ -215,13 +215,13 @@ const MatchDetailCard = ({ match, index }) => (
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
-                <div className="rounded-full bg-[#e7f7ea] px-3 py-1 text-xs font-bold text-[#1f7a36]">
+                <div className="rounded-full bg-[#e7f7ea] px-3 py-1 text-[11px] font-bold text-[#1f7a36] sm:text-xs">
                     Buteurs: {match.goals?.length || 0}
                 </div>
-                <div className="rounded-full bg-[#f0f7f0] px-3 py-1 text-xs font-bold text-[#3f5f49]">
+                <div className="rounded-full bg-[#f0f7f0] px-3 py-1 text-[11px] font-bold text-[#3f5f49] sm:text-xs">
                     Joueurs notes: {match.topPlayers?.length || 0}
                 </div>
-                <div className="rounded-full bg-[#103a1f] px-3 py-1 text-xs font-bold text-white">
+                <div className="rounded-full bg-[#103a1f] px-3 py-1 text-[11px] font-bold text-white sm:text-xs">
                     MVP: {match.manOfTheMatch?.name || 'en attente'}
                 </div>
             </div>
@@ -272,7 +272,7 @@ const MatchDetailCard = ({ match, index }) => (
             )}
 
             {getStatsSummary(match) && (
-                <div className="mt-5 rounded-[22px] border border-dashed border-[#cfe5cf] bg-[#f8fcf7] px-4 py-3 text-sm text-[#54705c]">
+                <div className="mt-5 rounded-[22px] border border-dashed border-[#cfe5cf] bg-[#f8fcf7] px-4 py-3 text-[13px] leading-6 text-[#54705c] sm:text-sm">
                     {getStatsSummary(match)}
                 </div>
             )}
@@ -323,7 +323,7 @@ const ScorerCard = ({ player, index }) => (
         transition={{ duration: 0.4, delay: index * 0.05 }}
         className="rounded-[28px] border border-[#d8ead8] bg-white p-5 shadow-[0_30px_80px_-50px_rgba(16,58,31,0.15)]"
     >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1f7a36] font-display text-2xl leading-none text-white">
                 {index + 1}
             </div>
@@ -351,7 +351,7 @@ const RatingCard = ({ player, index }) => (
         className="rounded-[28px] border border-[#d8ead8] bg-[linear-gradient(135deg,#ffffff,#f1f8f1)] p-5 shadow-[0_30px_80px_-50px_rgba(16,58,31,0.15)]"
     >
         <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1f7a36] font-display text-2xl leading-none text-white">
                     {index + 1}
                 </div>
@@ -595,6 +595,7 @@ const Home = () => {
 };
 
 export default Home;
+
 
 
 
