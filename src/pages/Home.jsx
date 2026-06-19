@@ -181,6 +181,156 @@ const MatchPill = ({ match }) => (
     </div>
 );
 
+const LiveMatchDetailCard = ({ match, index }) => (
+    <motion.article
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45, delay: index * 0.06 }}
+        className="overflow-hidden rounded-[34px] border border-[#20482c] bg-[linear-gradient(180deg,rgba(5,18,11,0.96),rgba(7,20,12,0.98))] shadow-[0_35px_110px_-60px_rgba(0,0,0,0.55)]"
+    >
+        <div className="border-b border-[#20482c] bg-[linear-gradient(120deg,rgba(12,35,20,0.96),rgba(18,56,30,0.9))] px-4 py-3 sm:px-6 sm:py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#7dc38d] sm:text-xs sm:tracking-[0.28em]">
+                    {match.groupName || match.stage || 'World Cup 2026'}
+                </div>
+                <div className="rounded-full border border-[#1f7a36] bg-[#1f7a36] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white sm:px-3 sm:text-xs sm:tracking-[0.2em]">
+                    {getMatchStatusLabel(match)}
+                </div>
+            </div>
+        </div>
+
+        <div className="relative overflow-hidden px-4 py-5 sm:px-6 sm:py-6">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_95%,rgba(111,219,134,0.18),transparent_32%),radial-gradient(circle_at_20%_40%,rgba(111,219,134,0.08),transparent_18%),radial-gradient(circle_at_80%_40%,rgba(111,219,134,0.08),transparent_18%)]" />
+            <div className="absolute inset-x-8 bottom-10 h-24 rounded-[999px] border border-[#264e2f]/50 bg-[radial-gradient(circle,rgba(111,219,134,0.16),transparent_72%)] blur-xl" />
+
+            <div className="relative z-10">
+                <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr] md:gap-5">
+                    <div>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <TeamBadge src={match.flagHome} alt={match.teamHome} />
+                            <div>
+                                <div className="text-[1rem] font-black text-white sm:text-xl md:text-2xl">{match.teamHome}</div>
+                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7dc38d] sm:text-xs sm:tracking-[0.22em]">
+                                    equipe 1
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-[28px] border border-[#295437] bg-[linear-gradient(135deg,#1f7a36,#195b29)] px-4 py-4 text-center text-white shadow-[0_18px_48px_-24px_rgba(47,143,70,0.55)] sm:rounded-[30px] sm:px-5">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#d8f5dc] sm:text-[10px] sm:tracking-[0.28em]">
+                            {getMatchCenterLabel(match)}
+                        </div>
+                        <div className="mt-2 font-display text-[2.6rem] uppercase leading-none sm:text-4xl">
+                            {match.status === 'upcoming'
+                                ? formatMatchTime(match.matchDate)
+                                : `${match.scoreHome ?? 0} - ${match.scoreAway ?? 0}`}
+                        </div>
+                    </div>
+
+                    <div className="md:text-right">
+                        <div className="flex items-center gap-4 md:justify-end">
+                            <div className="md:order-1">
+                                <div className="text-[1rem] font-black text-white sm:text-xl md:text-2xl">{match.teamAway}</div>
+                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7dc38d] sm:text-xs sm:tracking-[0.22em]">
+                                    equipe 2
+                                </div>
+                            </div>
+                            <div className="md:order-2">
+                                <TeamBadge src={match.flagAway} alt={match.teamAway} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                    <div className="rounded-full bg-[rgba(111,219,134,0.16)] px-3 py-1 text-[11px] font-bold text-[#9ce8aa] sm:text-xs">
+                        Buteurs: {match.goals?.length || 0}
+                    </div>
+                    <div className="rounded-full bg-[rgba(255,255,255,0.06)] px-3 py-1 text-[11px] font-bold text-[#d8ead8] sm:text-xs">
+                        Joueurs notes: {match.topPlayers?.length || 0}
+                    </div>
+                    <div className="rounded-full bg-[#f1c85d] px-3 py-1 text-[11px] font-bold text-[#182112] sm:text-xs">
+                        MVP: {match.manOfTheMatch?.name || 'en attente'}
+                    </div>
+                    {match.status === 'live' && match.fixtureId ? (
+                        <>
+                            <Link
+                                to={`/live/${match.fixtureId}`}
+                                className="inline-flex items-center rounded-full border border-[#2f8f46] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-[0_16px_34px_-18px_rgba(47,143,70,0.8)] transition hover:bg-[#256f38] sm:text-xs"
+                            >
+                                Suivre maintenant
+                            </Link>
+                            {WATCH_NOW_URL ? (
+                                <a
+                                    href={WATCH_NOW_URL}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center rounded-full border border-[#315d3d] bg-[rgba(255,255,255,0.05)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:border-[#4a8a59] hover:bg-[rgba(255,255,255,0.1)] sm:text-xs"
+                                >
+                                    Watch now
+                                </a>
+                            ) : null}
+                        </>
+                    ) : null}
+                </div>
+
+                {match.goals?.length > 0 && (
+                    <div className="mt-5 rounded-[26px] border border-[#1d4127] bg-[rgba(7,20,12,0.46)] p-4">
+                        <div className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-[#7dc38d]">
+                            Buts du match
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-2">
+                            {match.goals.map((goal, goalIndex) => (
+                                <div key={`${goal.playerName}-${goalIndex}`} className="flex items-center justify-between rounded-2xl border border-[#1d4127] bg-[rgba(6,18,11,0.62)] px-4 py-3 text-sm shadow-sm">
+                                    <span className="font-bold text-white">{goal.playerName}</span>
+                                    <span className="font-black text-[#2f8f46]">{goal.minute}'</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {match.manOfTheMatch?.name && (
+                    <div className="mt-5 rounded-[26px] border border-[#1d4127] bg-[linear-gradient(135deg,rgba(15,45,26,0.95),rgba(10,30,18,0.9))] p-4">
+                        <div className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-[#f1c85d]">
+                            Homme du match
+                        </div>
+                        <div className="rounded-2xl border border-[#1d4127] bg-[rgba(6,18,11,0.62)] px-4 py-4 shadow-sm">
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <PlayerAvatar src={match.manOfTheMatch.photo} alt={match.manOfTheMatch.name} />
+                                    <div>
+                                        <div className="font-black text-white">{match.manOfTheMatch.name}</div>
+                                        <div className="text-xs font-bold uppercase tracking-[0.18em] text-[#7dc38d]">
+                                            {match.manOfTheMatch.team}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-xl bg-[#1f7a36] px-3 py-2 text-center">
+                                    <div className="font-display text-2xl leading-none text-white">
+                                        {match.manOfTheMatch.rating}
+                                    </div>
+                                    <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#d8f5dc]">
+                                        motm
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {getStatsSummary(match) && (
+                    <div className="mt-5 rounded-[22px] border border-dashed border-[#325c3d] bg-[rgba(11,30,18,0.64)] px-4 py-3 text-[13px] leading-6 text-[#b8cfbf] sm:text-sm">
+                        {getStatsSummary(match)}
+                    </div>
+                )}
+            </div>
+        </div>
+    </motion.article>
+);
+
 const MatchDetailCard = ({ match, index }) => (
     <motion.article
         initial={{ opacity: 0, y: 30 }}
@@ -577,11 +727,7 @@ const Home = () => {
 
                                 <div className="grid gap-6">
                                     {liveMatches.map((match, index) => (
-                                        <MatchDetailCard
-                                            key={`live-${match.fixtureId || `${match.teamHome}-${match.teamAway}-${index}`}`}
-                                            match={match}
-                                            index={index}
-                                        />
+                                        <LiveMatchDetailCard key={`live-${match.fixtureId || `${match.teamHome}-${match.teamAway}-${index}`}`} match={match} index={index} />
                                     ))}
                                 </div>
                             </section>
@@ -695,6 +841,7 @@ const Home = () => {
 };
 
 export default Home;
+
 
 
 
