@@ -17,7 +17,7 @@ const formatMatchDate = (date) => new Date(date).toLocaleDateString('fr-FR', {
 
 const getStatsSummary = (match) => {
     if (match.status === 'upcoming') {
-        return 'Les statistiques detaillees arrivent des le coup d envoi.';
+        return null;
     }
 
     if ((match.topPlayers?.length || 0) === 0 && (match.goals?.length || 0) === 0) {
@@ -595,6 +595,8 @@ const Home = () => {
 };
 
 export default Home;
+
+
 
 
 
