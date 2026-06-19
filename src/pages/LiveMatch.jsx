@@ -16,6 +16,78 @@ const formatMatchDate = (date) => new Date(date).toLocaleDateString('fr-FR', {
     month: 'long'
 });
 
+const buildGoalTimeline = (goals = [], homeTeam, awayTeam) => {
+    let homeScore = 0;
+    let awayScore = 0;
+
+    return [...goals]
+        .sort((a, b) => (a.minute || 0) - (b.minute || 0))
+        .map((goal, index) => {
+            const normalizedGoalTeam = (goal.team || '').trim().toLowerCase();
+            const isHomeGoal = normalizedGoalTeam === (homeTeam || '').trim().toLowerCase();
+
+            if (isHomeGoal) {
+                homeScore += 1;
+            } else {
+                awayScore += 1;
+            }
+
+            return {
+                ...goal,
+                id: `${goal.playerName}-${goal.minute}-${index}`,
+                scoreline: `${homeScore} - ${awayScore}`
+            };
+        })
+        .reverse();
+};
+
+const StatChip = ({ label, value, accent = 'green' }) => {
+    const palette = {
+        green: 'bg-[#0f2d1a] text-[#79d18a] border-[#214e2d]',
+        soft: 'bg-[#102919] text-[#dcecdf] border-[#1d4127]',
+        gold: 'bg-[#2a2411] text-[#f3d27a] border-[#5b4c1d]'
+    };
+
+    return (
+        <div className={`rounded-full border px-4 py-2 text-sm font-bold ${palette[accent] || palette.green}`}>
+            {label}: {value}
+        </div>
+    );
+};
+
+const InfoTile = ({ label, value }) => (
+    <div className="rounded-[24px] border border-[#1d4127] bg-[rgba(7,20,12,0.36)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+        <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#6ea97a]">{label}</div>
+        <div className="mt-2 text-lg font-semibold text-white">{value}</div>
+    </div>
+);
+
+const PlayerCard = ({ player, highlight = false }) => (
+    <div className={`rounded-[24px] border px-4 py-4 ${highlight ? 'border-[#2f8f46] bg-[rgba(16,49,27,0.85)] shadow-[0_20px_50px_-35px_rgba(47,143,70,0.55)]' : 'border-[#1d4127] bg-[rgba(7,20,12,0.38)]'}`}>
+        <div className="flex items-center gap-3">
+            <div className="h-16 w-16 overflow-hidden rounded-2xl border border-[#295437] bg-[linear-gradient(135deg,#173724,#0c1e14)]">
+                {player.photo ? (
+                    <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
+                ) : null}
+            </div>
+            <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="truncate text-xl font-black text-white">{player.name}</div>
+                    <div className={`rounded-full px-3 py-1 text-sm font-black ${highlight ? 'bg-[#f1c85d] text-[#1a1f12]' : 'bg-[#163523] text-[#d5ead8]'}`}>
+                        {player.rating}
+                    </div>
+                </div>
+                <div className="mt-1 text-sm text-[#98b49f]">{player.team}</div>
+                {highlight ? (
+                    <div className="mt-3 inline-flex rounded-full bg-[#1f7a36] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white">
+                        mvp
+                    </div>
+                ) : null}
+            </div>
+        </div>
+    </div>
+);
+
 const LiveMatch = () => {
     const { fixtureId } = useParams();
     const [match, setMatch] = useState(null);
@@ -48,28 +120,36 @@ const LiveMatch = () => {
         return () => window.clearInterval(intervalId);
     }, [fixtureId]);
 
+    const timeline = buildGoalTimeline(match?.goals, match?.teamHome, match?.teamAway);
+    const featuredPlayers = match?.topPlayers?.slice(0, 3) || [];
+
     return (
-        <div className="min-h-[calc(100vh-80px)] bg-[radial-gradient(circle_at_top,rgba(111,219,134,0.12),transparent_24%),linear-gradient(180deg,#0f2517_0%,#08150d_72%)] px-4 py-10">
-            <div className="mx-auto max-w-5xl">
-                <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="min-h-[calc(100vh-80px)] bg-[radial-gradient(circle_at_top,rgba(111,219,134,0.12),transparent_24%),linear-gradient(180deg,#0d2516_0%,#07140c_72%)] px-4 py-8 sm:px-5 sm:py-10">
+            <div className="mx-auto max-w-6xl">
+                <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">live center</div>
-                        <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">Suivre maintenant</h1>
+                        <div className="text-xs font-bold uppercase tracking-[0.34em] text-[#7dc38d]">live center</div>
+                        <h1 className="mt-3 text-4xl font-black text-white sm:text-5xl">Suivre maintenant</h1>
+                        <div className="mt-3 text-base text-[#9eb8a5]">
+                            {match?.status === 'live' ? 'Match en direct' : 'Direct temporairement indisponible'}
+                            {match?.groupName ? ` • ${match.groupName}` : ''}
+                        </div>
                     </div>
+
                     <div className="flex flex-wrap items-center justify-end gap-3">
                         {WATCH_NOW_URL ? (
                             <a
                                 href={WATCH_NOW_URL}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="rounded-full border border-[#d8ead8] bg-white px-4 py-2 text-sm font-bold text-[#103a1f] transition hover:border-[#1f7a36] hover:text-[#1f7a36]"
+                                className="rounded-full border border-[#2d5a38] bg-[rgba(7,20,12,0.48)] px-5 py-3 text-sm font-bold text-white transition hover:border-[#3c7a4b] hover:bg-[rgba(7,20,12,0.68)]"
                             >
-                                Watch now
+                                Regarder sur M6+
                             </a>
                         ) : null}
                         <Link
                             to="/"
-                            className="rounded-full border border-[#3d6f49] bg-[rgba(7,20,12,0.4)] px-4 py-2 text-sm font-bold text-[#e8f5ea] transition hover:bg-[rgba(7,20,12,0.62)]"
+                            className="rounded-full border border-[#2d5a38] bg-[rgba(7,20,12,0.48)] px-5 py-3 text-sm font-bold text-white transition hover:border-[#3c7a4b] hover:bg-[rgba(7,20,12,0.68)]"
                         >
                             Retour accueil
                         </Link>
@@ -77,100 +157,172 @@ const LiveMatch = () => {
                 </div>
 
                 {loading ? (
-                    <div className="rounded-[28px] border border-[#d8ead8] bg-white px-6 py-12 text-center text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
+                    <div className="rounded-[30px] border border-[#15331f] bg-[rgba(5,16,10,0.72)] px-6 py-14 text-center text-[#b8cfbf] shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)]">
                         Chargement du direct...
                     </div>
                 ) : error ? (
-                    <div className="rounded-[28px] border border-[rgba(255,154,154,0.25)] bg-white px-6 py-12 text-center text-[#b85b5b] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
+                    <div className="rounded-[30px] border border-[rgba(255,154,154,0.2)] bg-white px-6 py-14 text-center text-[#c86464] shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)]">
                         {error}
                     </div>
                 ) : match ? (
-                    <div className="overflow-hidden rounded-[32px] border border-[#d8ead8] bg-white shadow-[0_35px_110px_-60px_rgba(16,58,31,0.18)]">
-                        <div className="border-b border-[#d8ead8] bg-[linear-gradient(120deg,#eef8ee,#f8fcf7)] px-5 py-4 sm:px-7">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#66806d] sm:text-xs sm:tracking-[0.28em]">
-                                    {match.groupName || match.competition || 'World Cup 2026'}
-                                </div>
-                                <div className="rounded-full border border-[#1f7a36] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white sm:text-xs">
-                                    {match.currentMinute ? `live ${match.currentMinute}'` : 'live'}
-                                </div>
-                            </div>
-                        </div>
+                    <div className="space-y-6">
+                        <section className="overflow-hidden rounded-[34px] border border-[#20482c] bg-[linear-gradient(180deg,rgba(5,18,11,0.9),rgba(7,20,12,0.96))] shadow-[0_35px_110px_-60px_rgba(0,0,0,0.55)]">
+                            <div className="relative overflow-hidden px-5 py-6 sm:px-8 sm:py-8">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_105%,rgba(111,219,134,0.25),transparent_32%),radial-gradient(circle_at_20%_48%,rgba(111,219,134,0.10),transparent_18%),radial-gradient(circle_at_80%_48%,rgba(111,219,134,0.10),transparent_18%)]" />
+                                <div className="absolute inset-x-0 bottom-0 h-44 bg-[linear-gradient(180deg,transparent,rgba(70,128,73,0.18)_40%,rgba(39,87,46,0.32))]" />
+                                <div className="absolute inset-x-10 bottom-8 h-28 rounded-[999px] border border-[#264e2f]/60 bg-[radial-gradient(circle,rgba(111,219,134,0.16),transparent_70%)] blur-xl" />
 
-                        <div className="px-5 py-6 sm:px-7 sm:py-7">
-                            <div className="grid items-center gap-5 md:grid-cols-[1fr_auto_1fr]">
-                                <div>
-                                    <div className="flex items-center gap-4">
-                                        <TeamBadge src={match.flagHome} alt={match.teamHome} />
-                                        <div>
-                                            <div className="text-2xl font-black text-[#103a1f] sm:text-3xl">{match.teamHome}</div>
-                                            <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#66806d] sm:text-xs">equipe 1</div>
+                                <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
+                                    <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#76b584]">
+                                        {match.groupName || match.competition || 'World Cup 2026'}
+                                    </div>
+                                    <div className="rounded-full bg-[linear-gradient(135deg,#ff513c,#ff1538)] px-5 py-2 text-sm font-black uppercase tracking-[0.24em] text-white shadow-[0_0_30px_rgba(255,59,59,0.35)]">
+                                        live
+                                    </div>
+                                </div>
+
+                                <div className="relative z-10 mt-6 grid items-center gap-6 md:grid-cols-[1fr_auto_1fr]">
+                                    <div className="text-center md:text-left">
+                                        <div className="mx-auto flex w-fit items-center gap-4 md:mx-0">
+                                            <TeamBadge src={match.flagHome} alt={match.teamHome} />
+                                            <div>
+                                                <div className="text-3xl font-black text-white sm:text-4xl">{match.teamHome}</div>
+                                                <div className="mt-2 text-xs font-bold uppercase tracking-[0.24em] text-[#7dc38d]">equipe 1</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-center">
+                                        <div className="mx-auto mb-4 inline-flex rounded-[20px] border border-[#295437] bg-[rgba(12,35,20,0.88)] px-5 py-3 text-2xl font-black text-[#a8efb6] shadow-[0_16px_40px_-24px_rgba(111,219,134,0.35)]">
+                                            {match.currentMinute ? `${match.currentMinute}'` : 'live'}
+                                        </div>
+                                        <div className="font-display text-[5rem] leading-none text-white sm:text-[6rem]">
+                                            {match.scoreHome ?? 0} - {match.scoreAway ?? 0}
+                                        </div>
+                                        <div className="mt-4 text-lg text-[#93b59b]">
+                                            {match.currentMinute ? `Minute ${match.currentMinute}` : 'Match en direct'}
+                                        </div>
+                                    </div>
+
+                                    <div className="text-center md:text-right">
+                                        <div className="mx-auto flex w-fit items-center gap-4 md:ml-auto md:mr-0">
+                                            <div className="md:order-1">
+                                                <div className="text-3xl font-black text-white sm:text-4xl">{match.teamAway}</div>
+                                                <div className="mt-2 text-xs font-bold uppercase tracking-[0.24em] text-[#7dc38d]">equipe 2</div>
+                                            </div>
+                                            <div className="md:order-2">
+                                                <TeamBadge src={match.flagAway} alt={match.teamAway} />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="rounded-[26px] bg-[#1f7a36] px-6 py-5 text-center text-white shadow-xl shadow-green-900/20">
-                                    <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#d8f5dc]">
-                                        {match.currentMinute ? `${match.currentMinute}'` : 'live'}
-                                    </div>
-                                    <div className="mt-2 font-display text-5xl leading-none">
-                                        {match.scoreHome ?? 0} - {match.scoreAway ?? 0}
-                                    </div>
+                                <div className="relative z-10 mt-8 flex flex-wrap gap-3">
+                                    <StatChip label="Buteurs" value={match.goals?.length || 0} accent="green" />
+                                    <StatChip label="Joueurs notes" value={match.topPlayers?.length || 0} accent="soft" />
+                                    <StatChip label="MVP" value={match.manOfTheMatch?.name || 'en attente'} accent="gold" />
                                 </div>
 
-                                <div className="md:text-right">
-                                    <div className="flex items-center gap-4 md:justify-end">
-                                        <div className="md:order-1">
-                                            <div className="text-2xl font-black text-[#103a1f] sm:text-3xl">{match.teamAway}</div>
-                                            <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#66806d] sm:text-xs">equipe 2</div>
+                                <div className="relative z-10 mt-8 grid gap-3 sm:grid-cols-2">
+                                    <Link
+                                        to={`/live/${match.fixtureId}`}
+                                        className="inline-flex items-center justify-center rounded-[24px] border border-[#2f8f46] bg-[linear-gradient(135deg,#1f7a36,#1a5f2b)] px-5 py-4 text-lg font-black text-white shadow-[0_18px_48px_-24px_rgba(47,143,70,0.55)] transition hover:translate-y-[-1px] hover:bg-[linear-gradient(135deg,#24863b,#1f7031)]"
+                                    >
+                                        Suivre maintenant
+                                    </Link>
+                                    {WATCH_NOW_URL ? (
+                                        <a
+                                            href={WATCH_NOW_URL}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center justify-center rounded-[24px] border border-[#264b31] bg-[rgba(8,22,13,0.72)] px-5 py-4 text-lg font-black text-white transition hover:border-[#315d3d] hover:bg-[rgba(8,22,13,0.92)]"
+                                        >
+                                            Regarder sur M6+
+                                        </a>
+                                    ) : (
+                                        <div className="inline-flex items-center justify-center rounded-[24px] border border-[#264b31] bg-[rgba(8,22,13,0.48)] px-5 py-4 text-lg font-black text-[#89a48f]">
+                                            Diffuseur a configurer
                                         </div>
-                                        <div className="md:order-2">
-                                            <TeamBadge src={match.flagAway} alt={match.teamAway} />
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
+                        </section>
 
-                            <div className="mt-6 flex flex-wrap gap-2 text-sm font-bold">
-                                <div className="rounded-full bg-[#e7f7ea] px-3 py-1 text-[#1f7a36]">Buteurs: {match.goals?.length || 0}</div>
-                                <div className="rounded-full bg-[#f0f7f0] px-3 py-1 text-[#3f5f49]">Joueurs notes: {match.topPlayers?.length || 0}</div>
-                                <div className="rounded-full bg-[#103a1f] px-3 py-1 text-white">MVP: {match.manOfTheMatch?.name || 'en attente'}</div>
-                            </div>
+                        <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+                            <section className="rounded-[30px] border border-[#1c4127] bg-[rgba(8,22,13,0.72)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
+                                <div className="mb-5 flex items-center justify-between gap-3">
+                                    <div>
+                                        <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">Temps forts</div>
+                                        <div className="mt-2 text-2xl font-black text-white">Moments du match</div>
+                                    </div>
+                                    <div className="text-sm text-[#a8bcae]">Voir tout</div>
+                                </div>
 
-                            <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                                <div className="rounded-[26px] bg-[#f4faf4] p-5">
-                                    <div className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-[#66806d]">Buts du match</div>
-                                    {match.goals?.length > 0 ? (
-                                        <div className="grid gap-2 sm:grid-cols-2">
-                                            {match.goals.map((goal, index) => (
-                                                <div key={`${goal.playerName}-${index}`} className="flex items-center justify-between rounded-2xl border border-[#dcecdc] bg-white px-4 py-3 text-sm shadow-sm">
-                                                    <span className="font-bold text-[#103a1f]">{goal.playerName}</span>
-                                                    <span className="font-black text-[#2f8f46]">{goal.minute}'</span>
+                                {timeline.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {timeline.map((goal, index) => (
+                                            <div key={goal.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[24px] border border-[#1d4127] bg-[rgba(6,18,11,0.62)] px-4 py-4">
+                                                <div className={`flex h-14 w-14 items-center justify-center rounded-full text-2xl font-black ${index === 0 ? 'bg-[#1f7a36] text-white' : 'bg-[rgba(31,122,54,0.18)] text-[#9ce8aa]'}`}>
+                                                    {goal.minute}'
                                                 </div>
+                                                <div>
+                                                    <div className="text-xl font-black text-white">
+                                                        But {goal.team === match.teamHome ? match.teamHome : match.teamAway} !
+                                                    </div>
+                                                    <div className="mt-1 text-lg text-[#b3c7b8]">{goal.playerName}</div>
+                                                </div>
+                                                <div className="rounded-full bg-[#1a5f2b] px-4 py-2 text-xl font-black text-white">
+                                                    {goal.scoreline}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-[24px] border border-dashed border-[#295437] bg-[rgba(7,20,12,0.42)] px-4 py-5 text-[#a7bcae]">
+                                        Aucun temps fort detaille disponible pour le moment.
+                                    </div>
+                                )}
+                            </section>
+
+                            <section className="space-y-6">
+                                <div className="rounded-[30px] border border-[#1c4127] bg-[rgba(8,22,13,0.72)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
+                                    <div className="mb-5 flex items-center justify-between gap-3">
+                                        <div>
+                                            <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">Meilleurs joueurs</div>
+                                            <div className="mt-2 text-2xl font-black text-white">Top players</div>
+                                        </div>
+                                        <div className="text-sm text-[#a8bcae]">Voir tout</div>
+                                    </div>
+
+                                    {featuredPlayers.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {featuredPlayers.map((player, index) => (
+                                                <PlayerCard
+                                                    key={`${player.name}-${index}`}
+                                                    player={player}
+                                                    highlight={index === 0}
+                                                />
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="rounded-2xl border border-dashed border-[#cfe5cf] bg-white px-4 py-4 text-sm text-[#54705c]">
-                                            Aucun but detaille disponible pour le moment.
+                                        <div className="rounded-[24px] border border-dashed border-[#295437] bg-[rgba(7,20,12,0.42)] px-4 py-5 text-[#a7bcae]">
+                                            Les notes joueurs du direct ne sont pas encore revenues.
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="rounded-[26px] bg-[linear-gradient(135deg,#f2fbf2,#e4f5e6)] p-5">
-                                    <div className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-[#2f8f46]">Infos live</div>
-                                    <div className="space-y-3 text-sm text-[#3f5f49]">
-                                        <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                                            Coup d envoi: {formatMatchDate(match.matchDate)} a {formatMatchTime(match.matchDate)}
-                                        </div>
-                                        <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                                            Stade: {match.venue || 'a confirmer'}
-                                        </div>
-                                        <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                                            Competition: {match.competition || 'World Cup 2026'}
-                                        </div>
+                                <div className="rounded-[30px] border border-[#1c4127] bg-[rgba(8,22,13,0.72)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
+                                    <div className="mb-5 text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">Infos du match</div>
+                                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                                        <InfoTile label="Stade" value={match.venue || 'a confirmer'} />
+                                        <InfoTile label="Date" value={formatMatchDate(match.matchDate)} />
+                                        <InfoTile label="Heure" value={formatMatchTime(match.matchDate)} />
+                                        <InfoTile label="Competition" value={match.competition || 'World Cup 2026'} />
+                                        <InfoTile label="Statut" value={match.currentMinute ? `En direct ${match.currentMinute}'` : 'En direct'} />
+                                        <InfoTile label="Buteurs" value={String(match.goals?.length || 0)} />
                                     </div>
                                 </div>
-                            </div>
+                            </section>
                         </div>
                     </div>
                 ) : null}
@@ -180,4 +332,3 @@ const LiveMatch = () => {
 };
 
 export default LiveMatch;
-
