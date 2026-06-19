@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import api from '../services/api';
 import TeamBadge from '../components/TeamBadge';
 
+const WATCH_NOW_URL = import.meta.env.VITE_WATCH_NOW_URL || '';
+
 const formatMatchTime = (date) => new Date(date).toLocaleTimeString('fr-FR', {
     hour: '2-digit',
     minute: '2-digit'
@@ -54,12 +56,24 @@ const LiveMatch = () => {
                         <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">live center</div>
                         <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">Suivre maintenant</h1>
                     </div>
-                    <Link
-                        to="/"
-                        className="rounded-full border border-[#3d6f49] bg-[rgba(7,20,12,0.4)] px-4 py-2 text-sm font-bold text-[#e8f5ea] transition hover:bg-[rgba(7,20,12,0.62)]"
-                    >
-                        Retour accueil
-                    </Link>
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        {WATCH_NOW_URL ? (
+                            <a
+                                href={WATCH_NOW_URL}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="rounded-full border border-[#d8ead8] bg-white px-4 py-2 text-sm font-bold text-[#103a1f] transition hover:border-[#1f7a36] hover:text-[#1f7a36]"
+                            >
+                                Watch now
+                            </a>
+                        ) : null}
+                        <Link
+                            to="/"
+                            className="rounded-full border border-[#3d6f49] bg-[rgba(7,20,12,0.4)] px-4 py-2 text-sm font-bold text-[#e8f5ea] transition hover:bg-[rgba(7,20,12,0.62)]"
+                        >
+                            Retour accueil
+                        </Link>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -166,3 +180,4 @@ const LiveMatch = () => {
 };
 
 export default LiveMatch;
+

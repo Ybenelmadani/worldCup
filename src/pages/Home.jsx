@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import api from '../services/api';
 import TeamBadge from '../components/TeamBadge';
 
+const WATCH_NOW_URL = import.meta.env.VITE_WATCH_NOW_URL || '';
+
 const formatMatchTime = (date) => new Date(date).toLocaleTimeString('fr-FR', {
     hour: '2-digit',
     minute: '2-digit'
@@ -253,12 +255,24 @@ const MatchDetailCard = ({ match, index }) => (
                     MVP: {match.manOfTheMatch?.name || 'en attente'}
                 </div>
                 {match.status === 'live' && match.fixtureId ? (
-                    <Link
-                        to={`/live/${match.fixtureId}`}
-                        className="inline-flex items-center rounded-full border border-[#1f7a36] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#256f38] sm:text-xs"
-                    >
-                        Suivre maintenant
-                    </Link>
+                    <>
+                        <Link
+                            to={`/live/${match.fixtureId}`}
+                            className="inline-flex items-center rounded-full border border-[#1f7a36] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#256f38] sm:text-xs"
+                        >
+                            Suivre maintenant
+                        </Link>
+                        {WATCH_NOW_URL ? (
+                            <a
+                                href={WATCH_NOW_URL}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center rounded-full border border-[#d8ead8] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#103a1f] transition hover:border-[#1f7a36] hover:text-[#1f7a36] sm:text-xs"
+                            >
+                                Watch now
+                            </a>
+                        ) : null}
+                    </>
                 ) : null}
             </div>
 
@@ -681,6 +695,7 @@ const Home = () => {
 };
 
 export default Home;
+
 
 
 
