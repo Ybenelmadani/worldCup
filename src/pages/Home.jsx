@@ -114,6 +114,7 @@ const mergeMatchCollections = (primaryMatches, localMatches) => {
 
         return {
             ...match,
+            fixtureId: localMatch.fixtureId || match.fixtureId,
             goals: localMatch.goals?.length ? localMatch.goals : match.goals,
             topPlayers: localMatch.topPlayers?.length ? localMatch.topPlayers : match.topPlayers,
             manOfTheMatch: localMatch.manOfTheMatch?.name ? localMatch.manOfTheMatch : match.manOfTheMatch,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../services/api';
 
@@ -183,10 +183,107 @@ const InfoTile = ({ icon, label, value }) => (
     </div>
 );
 
+const VideoPlayer = ({ url }) => {
+    const videoRef = useRef(null);
+    const [hlsError, setHlsError] = useState('');
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        let hls = null;
+        let isDestroyed = false;
+
+        const initPlayer = (HlsClass) => {
+            if (isDestroyed) return;
+
+            if (HlsClass.isSupported()) {
+                hls = new HlsClass({
+                    maxMaxBufferLength: 10,
+                    enableWorker: true,
+                    lowLatencyMode: true
+                });
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                
+                hls.on(HlsClass.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case HlsClass.ErrorTypes.NETWORK_ERROR:
+                                console.warn("Fatal network error encountered, trying to recover...");
+                                hls.startLoad();
+                                break;
+                            case HlsClass.ErrorTypes.MEDIA_ERROR:
+                                console.warn("Fatal media error encountered, trying to recover...");
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                console.error("Unrecoverable error:", data);
+                                setHlsError("Impossible de charger ce flux. Essaie un autre serveur.");
+                                break;
+                        }
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+            } else {
+                setHlsError("Ton navigateur ne supporte pas la lecture de flux HLS.");
+            }
+        };
+
+        const loadScript = () => {
+            if (window.Hls) {
+                initPlayer(window.Hls);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js';
+            script.onload = () => {
+                if (window.Hls) {
+                    initPlayer(window.Hls);
+                }
+            };
+            script.onerror = () => {
+                setHlsError("Erreur de chargement du lecteur HLS.");
+            };
+            document.head.appendChild(script);
+        };
+
+        setHlsError('');
+        loadScript();
+
+        return () => {
+            isDestroyed = true;
+            if (hls) {
+                hls.destroy();
+            }
+        };
+    }, [url]);
+
+    if (hlsError) {
+        return (
+            <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-950 p-6 text-center text-[#c86464]">
+                <p className="text-lg font-bold">{hlsError}</p>
+            </div>
+        );
+    }
+
+    return (
+        <video
+            ref={videoRef}
+            controls
+            autoPlay
+            playsInline
+            className="h-full w-full object-contain"
+        />
+    );
+};
+
 const LiveMatch = () => {
     const { fixtureId } = useParams();
     const [match, setMatch] = useState(null);
     const [streams, setStreams] = useState([]);
+    const [activeStream, setActiveStream] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isFallbackData, setIsFallbackData] = useState(false);
@@ -204,7 +301,13 @@ const LiveMatch = () => {
                     
                     if (currentLiveMatch._id) {
                         api.get(`/matches/${currentLiveMatch._id}/streams`)
-                            .then(res => setStreams(res.data.streams || []))
+                            .then(res => {
+                                const retrieved = res.data.streams || [];
+                                setStreams(retrieved);
+                                if (retrieved.length > 0) {
+                                    setActiveStream(retrieved[0]);
+                                }
+                            })
                             .catch(err => console.log('Streams IPTV non disponibles', err));
                     }
                     return;
@@ -220,7 +323,13 @@ const LiveMatch = () => {
                     
                     if (fallbackMatch._id) {
                         api.get(`/matches/${fallbackMatch._id}/streams`)
-                            .then(res => setStreams(res.data.streams || []))
+                            .then(res => {
+                                const retrieved = res.data.streams || [];
+                                setStreams(retrieved);
+                                if (retrieved.length > 0) {
+                                    setActiveStream(retrieved[0]);
+                                }
+                            })
                             .catch(err => console.log('Streams IPTV non disponibles', err));
                     }
                     return;
@@ -338,6 +447,37 @@ const LiveMatch = () => {
                             <StatChip icon={<IconTrophy />} label="MVP" value={match.manOfTheMatch?.name || 'en attente'} highlight />
                         </div>
 
+                        {/* Embedded HLS Live Stream Player */}
+                        {activeStream ? (
+                            <section className="overflow-hidden rounded-[34px] border border-[#1a4727] bg-[#05100a] p-5 shadow-[0_40px_120px_-60px_rgba(0,0,0,0.85)]">
+                                <div className="mb-4">
+                                    <div className="text-xs font-bold uppercase tracking-[0.24em] text-[#7dc38d]">Lecteur Direct</div>
+                                    <h3 className="mt-1 text-2xl font-black text-white">Regarder en direct : {activeStream.name}</h3>
+                                </div>
+                                <div className="relative aspect-video w-full rounded-[24px] overflow-hidden bg-black border border-white/5">
+                                    <VideoPlayer url={activeStream.url} />
+                                </div>
+                                <div className="mt-5">
+                                    <div className="text-xs font-bold uppercase tracking-[0.24em] text-[#7dc38d] mb-3">Changer de serveur</div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {streams.map((stream, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setActiveStream(stream)}
+                                                className={`rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition ${
+                                                    activeStream.url === stream.url
+                                                        ? 'bg-[#1f7a36] text-white shadow-lg border border-[#2f8f46]'
+                                                        : 'bg-white/5 text-[#a8efb6] border border-white/10 hover:bg-white/10'
+                                                }`}
+                                            >
+                                                📺 {stream.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </section>
+                        ) : null}
+
                         <div className="grid gap-4 md:grid-cols-2">
                             <Link
                                 to={`/live/${match.fixtureId}`}
@@ -347,14 +487,19 @@ const LiveMatch = () => {
                                 Suivre maintenant
                             </Link>
                             {streams.length > 0 ? (
-                                <a
-                                    href={streams[0].url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center justify-center gap-3 rounded-[24px] border border-[#166099] bg-[rgba(8,22,35,0.72)] px-6 py-5 text-2xl font-black text-[#8bbbf2] transition hover:border-[#1a73b8] hover:bg-[rgba(8,22,35,0.92)] shadow-[0_10px_30px_-15px_rgba(22,96,153,0.4)]"
-                                >
-                                    Regarder en direct (IPTV)
-                                </a>
+                                <div className="col-span-1 md:col-span-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 w-full">
+                                    {streams.map((stream, idx) => (
+                                        <a
+                                            key={idx}
+                                            href={stream.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center justify-center gap-2 rounded-[24px] border border-[#166099] bg-[rgba(8,22,35,0.72)] px-4 py-4 text-lg font-black text-[#8bbbf2] transition hover:border-[#1a73b8] hover:bg-[rgba(8,22,35,0.92)] shadow-[0_10px_30px_-15px_rgba(22,96,153,0.4)]"
+                                        >
+                                            Regarder sur {stream.name}
+                                        </a>
+                                    ))}
+                                </div>
                             ) : WATCH_NOW_URL ? (
                                 <a
                                     href={WATCH_NOW_URL}
@@ -362,7 +507,6 @@ const LiveMatch = () => {
                                     rel="noreferrer"
                                     className="inline-flex items-center justify-center gap-3 rounded-[24px] border border-[#264b31] bg-[rgba(8,22,13,0.72)] px-6 py-5 text-2xl font-black text-white transition hover:border-[#315d3d] hover:bg-[rgba(8,22,13,0.92)]"
                                 >
-                                    M6+
                                     Regarder sur M6+
                                 </a>
                             ) : (
