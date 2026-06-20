@@ -186,6 +186,7 @@ const InfoTile = ({ icon, label, value }) => (
 const LiveMatch = () => {
     const { fixtureId } = useParams();
     const [match, setMatch] = useState(null);
+    const [streams, setStreams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isFallbackData, setIsFallbackData] = useState(false);
@@ -200,6 +201,12 @@ const LiveMatch = () => {
                     setMatch(currentLiveMatch);
                     setIsFallbackData(false);
                     setError('');
+                    
+                    if (currentLiveMatch._id) {
+                        api.get(`/matches/${currentLiveMatch._id}/streams`)
+                            .then(res => setStreams(res.data.streams || []))
+                            .catch(err => console.log('Streams IPTV non disponibles', err));
+                    }
                     return;
                 }
 
@@ -210,6 +217,12 @@ const LiveMatch = () => {
                     setMatch(fallbackMatch);
                     setIsFallbackData(true);
                     setError('');
+                    
+                    if (fallbackMatch._id) {
+                        api.get(`/matches/${fallbackMatch._id}/streams`)
+                            .then(res => setStreams(res.data.streams || []))
+                            .catch(err => console.log('Streams IPTV non disponibles', err));
+                    }
                     return;
                 }
 
@@ -333,7 +346,16 @@ const LiveMatch = () => {
                                 <IconLive />
                                 Suivre maintenant
                             </Link>
-                            {WATCH_NOW_URL ? (
+                            {streams.length > 0 ? (
+                                <a
+                                    href={streams[0].url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center justify-center gap-3 rounded-[24px] border border-[#166099] bg-[rgba(8,22,35,0.72)] px-6 py-5 text-2xl font-black text-[#8bbbf2] transition hover:border-[#1a73b8] hover:bg-[rgba(8,22,35,0.92)] shadow-[0_10px_30px_-15px_rgba(22,96,153,0.4)]"
+                                >
+                                    Regarder en direct (IPTV)
+                                </a>
+                            ) : WATCH_NOW_URL ? (
                                 <a
                                     href={WATCH_NOW_URL}
                                     target="_blank"
@@ -345,7 +367,7 @@ const LiveMatch = () => {
                                 </a>
                             ) : (
                                 <div className="inline-flex items-center justify-center rounded-[24px] border border-[#264b31] bg-[rgba(8,22,13,0.48)] px-6 py-5 text-2xl font-black text-[#89a48f]">
-                                    Diffuseur a configurer
+                                    Recherche de flux IPTV...
                                 </div>
                             )}
                         </div>

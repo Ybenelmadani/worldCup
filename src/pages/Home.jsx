@@ -53,6 +53,12 @@ const getStatsSummary = (match) => {
     return null;
 };
 
+const hasStats = (match) => (
+    (match.goals?.length > 0) ||
+    (match.topPlayers?.length > 0) ||
+    !!match.manOfTheMatch?.name
+);
+
 const getStandingsMessage = (footballData, apiUnavailable) => {
     if (apiUnavailable) {
         return 'Le front ne parvient pas a joindre le backend. Verifie VITE_API_URL dans le frontend et FRONTEND_URL dans le backend.';
@@ -205,76 +211,77 @@ const LiveMatchDetailCard = ({ match, index }) => (
             <div className="absolute inset-x-8 bottom-10 h-24 rounded-[999px] border border-[#264e2f]/50 bg-[radial-gradient(circle,rgba(111,219,134,0.16),transparent_72%)] blur-xl" />
 
             <div className="relative z-10">
-                <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr] md:gap-5">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 md:gap-5">
                     <div>
-                        <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="flex items-center gap-2 sm:gap-4">
                             <TeamBadge src={match.flagHome} alt={match.teamHome} />
-                            <div>
-                                <div className="text-[1rem] font-black text-white sm:text-xl md:text-2xl">{match.teamHome}</div>
-                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7dc38d] sm:text-xs sm:tracking-[0.22em]">
+                            <div className="min-w-0 flex-1">
+                                <div className="truncate text-[0.85rem] font-black text-white sm:text-xl md:text-2xl">{match.teamHome}</div>
+                                <div className="mt-1 truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#7dc38d] sm:text-xs sm:tracking-[0.22em]">
                                     equipe 1
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-[28px] border border-[#295437] bg-[linear-gradient(135deg,#1f7a36,#195b29)] px-4 py-4 text-center text-white shadow-[0_18px_48px_-24px_rgba(47,143,70,0.55)] sm:rounded-[30px] sm:px-5">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#d8f5dc] sm:text-[10px] sm:tracking-[0.28em]">
+                    <div className="rounded-[20px] border border-[#295437] bg-[linear-gradient(135deg,#1f7a36,#195b29)] px-2 py-2 text-center text-white shadow-[0_18px_48px_-24px_rgba(47,143,70,0.55)] sm:rounded-[30px] sm:px-5 sm:py-4">
+                        <div className="truncate text-[8px] font-bold uppercase tracking-[0.1em] text-[#d8f5dc] sm:text-[10px] sm:tracking-[0.28em]">
                             {getMatchCenterLabel(match)}
                         </div>
-                        <div className="mt-2 font-display text-[2.6rem] uppercase leading-none sm:text-4xl">
+                        <div className="mt-1 font-display text-xl uppercase leading-none sm:mt-2 sm:text-4xl">
                             {match.status === 'upcoming'
                                 ? formatMatchTime(match.matchDate)
                                 : `${match.scoreHome ?? 0} - ${match.scoreAway ?? 0}`}
                         </div>
                     </div>
 
-                    <div className="md:text-right">
-                        <div className="flex items-center gap-4 md:justify-end">
-                            <div className="md:order-1">
-                                <div className="text-[1rem] font-black text-white sm:text-xl md:text-2xl">{match.teamAway}</div>
-                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7dc38d] sm:text-xs sm:tracking-[0.22em]">
+                    <div className="text-right">
+                        <div className="flex items-center justify-end gap-2 sm:gap-4">
+                            <div className="min-w-0 flex-1 text-right">
+                                <div className="truncate text-[0.85rem] font-black text-white sm:text-xl md:text-2xl">{match.teamAway}</div>
+                                <div className="mt-1 truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#7dc38d] sm:text-xs sm:tracking-[0.22em]">
                                     equipe 2
                                 </div>
                             </div>
-                            <div className="md:order-2">
-                                <TeamBadge src={match.flagAway} alt={match.teamAway} />
-                            </div>
+                            <TeamBadge src={match.flagAway} alt={match.teamAway} />
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-5 flex flex-wrap items-center gap-2">
-                    <div className="rounded-full bg-[rgba(111,219,134,0.16)] px-3 py-1 text-[11px] font-bold text-[#9ce8aa] sm:text-xs">
-                        Buteurs: {match.goals?.length || 0}
+                {hasStats(match) && (
+                    <div className="mt-5 flex flex-wrap items-center gap-2">
+                        <div className="rounded-full bg-[rgba(111,219,134,0.16)] px-3 py-1 text-[11px] font-bold text-[#9ce8aa] sm:text-xs">
+                            Buteurs: {match.goals?.length || 0}
+                        </div>
+                        <div className="rounded-full bg-[rgba(255,255,255,0.06)] px-3 py-1 text-[11px] font-bold text-[#d8ead8] sm:text-xs">
+                            Joueurs notes: {match.topPlayers?.length || 0}
+                        </div>
+                        <div className="rounded-full bg-[#f1c85d] px-3 py-1 text-[11px] font-bold text-[#182112] sm:text-xs">
+                            MVP: {match.manOfTheMatch?.name || 'en attente'}
+                        </div>
                     </div>
-                    <div className="rounded-full bg-[rgba(255,255,255,0.06)] px-3 py-1 text-[11px] font-bold text-[#d8ead8] sm:text-xs">
-                        Joueurs notes: {match.topPlayers?.length || 0}
-                    </div>
-                    <div className="rounded-full bg-[#f1c85d] px-3 py-1 text-[11px] font-bold text-[#182112] sm:text-xs">
-                        MVP: {match.manOfTheMatch?.name || 'en attente'}
-                    </div>
-                    {match.status === 'live' && match.fixtureId ? (
-                        <>
-                            <Link
-                                to={`/live/${match.fixtureId}`}
-                                className="inline-flex items-center rounded-full border border-[#2f8f46] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-[0_16px_34px_-18px_rgba(47,143,70,0.8)] transition hover:bg-[#256f38] sm:text-xs"
+                )}
+
+                {match.status === 'live' && match.fixtureId ? (
+                    <div className="mt-5 flex flex-wrap items-center gap-2">
+                        <Link
+                            to={`/live/${match.fixtureId}`}
+                            className="inline-flex items-center rounded-full border border-[#2f8f46] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-[0_16px_34px_-18px_rgba(47,143,70,0.8)] transition hover:bg-[#256f38] sm:text-xs"
+                        >
+                            Suivre maintenant
+                        </Link>
+                        {WATCH_NOW_URL ? (
+                            <a
+                                href={WATCH_NOW_URL}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center rounded-full border border-[#315d3d] bg-[rgba(255,255,255,0.05)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:border-[#4a8a59] hover:bg-[rgba(255,255,255,0.1)] sm:text-xs"
                             >
-                                Suivre maintenant
-                            </Link>
-                            {WATCH_NOW_URL ? (
-                                <a
-                                    href={WATCH_NOW_URL}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center rounded-full border border-[#315d3d] bg-[rgba(255,255,255,0.05)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:border-[#4a8a59] hover:bg-[rgba(255,255,255,0.1)] sm:text-xs"
-                                >
-                                    Watch now
-                                </a>
-                            ) : null}
-                        </>
-                    ) : null}
-                </div>
+                                Watch now
+                            </a>
+                        ) : null}
+                    </div>
+                ) : null}
 
                 {match.goals?.length > 0 && (
                     <div className="mt-5 rounded-[26px] border border-[#1d4127] bg-[rgba(7,20,12,0.46)] p-4">
@@ -320,12 +327,6 @@ const LiveMatchDetailCard = ({ match, index }) => (
                         </div>
                     </div>
                 )}
-
-                {getStatsSummary(match) && (
-                    <div className="mt-5 rounded-[22px] border border-dashed border-[#325c3d] bg-[rgba(11,30,18,0.64)] px-4 py-3 text-[13px] leading-6 text-[#b8cfbf] sm:text-sm">
-                        {getStatsSummary(match)}
-                    </div>
-                )}
             </div>
         </div>
     </motion.article>
@@ -355,76 +356,77 @@ const MatchDetailCard = ({ match, index }) => (
         </div>
 
         <div className="px-4 py-5 sm:px-6 sm:py-6">
-            <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr] md:gap-5">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 md:gap-5">
                 <div>
-                    <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <TeamBadge src={match.flagHome} alt={match.teamHome} />
-                        <div>
-                            <div className="text-[1rem] font-black text-[#103a1f] sm:text-xl md:text-2xl">{match.teamHome}</div>
-                            <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#66806d] sm:text-xs sm:tracking-[0.22em]">
+                        <div className="min-w-0 flex-1">
+                            <div className="truncate text-[0.85rem] font-black text-[#103a1f] sm:text-xl md:text-2xl">{match.teamHome}</div>
+                            <div className="mt-1 truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#66806d] sm:text-xs sm:tracking-[0.22em]">
                                 equipe 1
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-[24px] bg-[#1f7a36] px-4 py-4 text-center text-white shadow-xl shadow-green-900/20 sm:rounded-[26px] sm:px-5">
-                    <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#d8f5dc] sm:text-[10px] sm:tracking-[0.28em]">
+                <div className="rounded-[20px] bg-[#1f7a36] px-2 py-2 text-center text-white shadow-xl shadow-green-900/20 sm:rounded-[26px] sm:px-5 sm:py-4">
+                    <div className="truncate text-[8px] font-bold uppercase tracking-[0.1em] text-[#d8f5dc] sm:text-[10px] sm:tracking-[0.28em]">
                         {getMatchCenterLabel(match)}
                     </div>
-                    <div className="mt-2 font-display text-[2.6rem] uppercase leading-none sm:text-4xl">
+                    <div className="mt-1 font-display text-xl uppercase leading-none sm:mt-2 sm:text-4xl">
                         {match.status === 'upcoming'
                             ? formatMatchTime(match.matchDate)
                             : `${match.scoreHome ?? 0} - ${match.scoreAway ?? 0}`}
                     </div>
                 </div>
 
-                <div className="md:text-right">
-                    <div className="flex items-center gap-4 md:justify-end">
-                        <div className="md:order-1">
-                            <div className="text-[1rem] font-black text-[#103a1f] sm:text-xl md:text-2xl">{match.teamAway}</div>
-                            <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#66806d] sm:text-xs sm:tracking-[0.22em]">
+                <div className="text-right">
+                    <div className="flex items-center justify-end gap-2 sm:gap-4">
+                        <div className="min-w-0 flex-1 text-right">
+                            <div className="truncate text-[0.85rem] font-black text-[#103a1f] sm:text-xl md:text-2xl">{match.teamAway}</div>
+                            <div className="mt-1 truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#66806d] sm:text-xs sm:tracking-[0.22em]">
                                 equipe 2
                             </div>
                         </div>
-                        <div className="md:order-2">
-                            <TeamBadge src={match.flagAway} alt={match.teamAway} />
-                        </div>
+                        <TeamBadge src={match.flagAway} alt={match.teamAway} />
                     </div>
                 </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-                <div className="rounded-full bg-[#e7f7ea] px-3 py-1 text-[11px] font-bold text-[#1f7a36] sm:text-xs">
-                    Buteurs: {match.goals?.length || 0}
+            {hasStats(match) && (
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                    <div className="rounded-full bg-[#e7f7ea] px-3 py-1 text-[11px] font-bold text-[#1f7a36] sm:text-xs">
+                        Buteurs: {match.goals?.length || 0}
+                    </div>
+                    <div className="rounded-full bg-[#f0f7f0] px-3 py-1 text-[11px] font-bold text-[#3f5f49] sm:text-xs">
+                        Joueurs notes: {match.topPlayers?.length || 0}
+                    </div>
+                    <div className="rounded-full bg-[#103a1f] px-3 py-1 text-[11px] font-bold text-white sm:text-xs">
+                        MVP: {match.manOfTheMatch?.name || 'en attente'}
+                    </div>
                 </div>
-                <div className="rounded-full bg-[#f0f7f0] px-3 py-1 text-[11px] font-bold text-[#3f5f49] sm:text-xs">
-                    Joueurs notes: {match.topPlayers?.length || 0}
-                </div>
-                <div className="rounded-full bg-[#103a1f] px-3 py-1 text-[11px] font-bold text-white sm:text-xs">
-                    MVP: {match.manOfTheMatch?.name || 'en attente'}
-                </div>
-                {match.status === 'live' && match.fixtureId ? (
-                    <>
-                        <Link
-                            to={`/live/${match.fixtureId}`}
-                            className="inline-flex items-center rounded-full border border-[#1f7a36] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#256f38] sm:text-xs"
+            )}
+
+            {match.status === 'live' && match.fixtureId ? (
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                    <Link
+                        to={`/live/${match.fixtureId}`}
+                        className="inline-flex items-center rounded-full border border-[#1f7a36] bg-[#1f7a36] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#256f38] sm:text-xs"
+                    >
+                        Suivre maintenant
+                    </Link>
+                    {WATCH_NOW_URL ? (
+                        <a
+                            href={WATCH_NOW_URL}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center rounded-full border border-[#d8ead8] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#103a1f] transition hover:border-[#1f7a36] hover:text-[#1f7a36] sm:text-xs"
                         >
-                            Suivre maintenant
-                        </Link>
-                        {WATCH_NOW_URL ? (
-                            <a
-                                href={WATCH_NOW_URL}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center rounded-full border border-[#d8ead8] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#103a1f] transition hover:border-[#1f7a36] hover:text-[#1f7a36] sm:text-xs"
-                            >
-                                Watch now
-                            </a>
-                        ) : null}
-                    </>
-                ) : null}
-            </div>
+                            Watch now
+                        </a>
+                    ) : null}
+                </div>
+            ) : null}
 
             {match.goals?.length > 0 && (
                 <div className="mt-5 rounded-[26px] bg-[#f4faf4] p-4">
@@ -468,12 +470,6 @@ const MatchDetailCard = ({ match, index }) => (
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {getStatsSummary(match) && (
-                <div className="mt-5 rounded-[22px] border border-dashed border-[#cfe5cf] bg-[#f8fcf7] px-4 py-3 text-[13px] leading-6 text-[#54705c] sm:text-sm">
-                    {getStatsSummary(match)}
                 </div>
             )}
         </div>
@@ -719,11 +715,7 @@ const Home = () => {
                     <div className="space-y-20">
                         {liveMatches.length > 0 && (
                             <section>
-                                <SectionHeader
-                                    eyebrow="00"
-                                    title="Matchs en direct"
-                                    subtitle="Cette section se rafraichit automatiquement toutes les 30 secondes pour suivre les scores, minutes et statistiques sans sauvegarder le live dans la base locale."
-                                />
+                                <h1 className="mb-8 font-display text-4xl uppercase leading-none text-white md:text-5xl">Matchs en direct</h1>
 
                                 <div className="grid gap-6">
                                     {liveMatches.map((match, index) => (
@@ -748,11 +740,19 @@ const Home = () => {
                             ) : (
                                 <div className="grid gap-6">
                                     {matchesToDisplay.map((match, index) => (
-                                        <MatchDetailCard
-                                            key={match.fixtureId || match._id || `${match.teamHome}-${match.teamAway}-${index}`}
-                                            match={match}
-                                            index={index}
-                                        />
+                                        match.status === 'finished' ? (
+                                            <LiveMatchDetailCard
+                                                key={match.fixtureId || match._id || `${match.teamHome}-${match.teamAway}-${index}`}
+                                                match={match}
+                                                index={index}
+                                            />
+                                        ) : (
+                                            <MatchDetailCard
+                                                key={match.fixtureId || match._id || `${match.teamHome}-${match.teamAway}-${index}`}
+                                                match={match}
+                                                index={index}
+                                            />
+                                        )
                                     ))}
                                 </div>
                             )}
