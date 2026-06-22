@@ -650,10 +650,11 @@ const Home = () => {
         };
     }, []);
 
-    const matchesToDisplay = footballData.matches.length > 0
+        const liveMatches = liveCenter.matches || [];
+    const matchesToDisplay = (footballData.matches.length > 0
         ? mergeMatchCollections(footballData.matches, overview.matches)
-        : overview.matches;
-    const liveMatches = liveCenter.matches || [];
+        : overview.matches
+    ).filter(match => match.status !== 'live');
     const standingsToDisplay = footballData.standings;
     const topScorers = footballData.scorers.slice(0, 6);
     const rankedPlayers = overview.topPlayers.slice(0, 6);
