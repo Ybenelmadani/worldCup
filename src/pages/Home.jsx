@@ -17,6 +17,19 @@ const formatMatchDate = (date) => new Date(date).toLocaleDateString('fr-FR', {
     month: 'short'
 });
 
+const isMatchStarted = (match) => {
+    if (!match || !match.matchDate) return false;
+    if (match.status === 'live') return true;
+    if (match.status === 'finished') return false;
+
+    const matchTime = new Date(match.matchDate).getTime();
+    if (isNaN(matchTime)) return false;
+
+    const now = Date.now();
+    const threeHours = 3 * 60 * 60 * 1000;
+    return now >= matchTime && now <= matchTime + threeHours;
+};
+
 const getMatchStatusLabel = (match) => {
     if (match.status === 'live') {
         return match.currentMinute ? `live ${match.currentMinute}'` : 'live';
@@ -347,11 +360,11 @@ const MatchDetailCard = ({ match, index }) => (
                     {match.groupName || match.stage || 'World Cup 2026'}
                 </div>
                 <div className={`rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] sm:px-3 sm:text-xs sm:tracking-[0.2em] ${
-                    match.status === 'live'
+                    (match.status === 'live' || isMatchStarted(match))
                         ? 'border-[#1f7a36] bg-[#1f7a36] text-white'
                         : 'border-[#cfe5cf] bg-white text-[#3f5f49]'
                 }`}>
-                    {getMatchStatusLabel(match)}
+                    {(match.status === 'live' || isMatchStarted(match)) ? 'live' : getMatchStatusLabel(match)}
                 </div>
             </div>
         </div>
@@ -408,7 +421,7 @@ const MatchDetailCard = ({ match, index }) => (
                 </div>
             )}
 
-            {match.status === 'live' && match.fixtureId ? (
+            {(match.status === 'live' || isMatchStarted(match)) && match.fixtureId ? (
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                     <Link
                         to={`/live/${match.fixtureId}`}
