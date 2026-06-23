@@ -49,7 +49,7 @@ const Navbar = () => {
         >
             <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <Link to="/" className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden">
+                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden">
                         <img src="/footbattle_logo.svg" alt="CyberFoot logo" className="h-full w-full object-contain" />
                     </div>
                     <div>
