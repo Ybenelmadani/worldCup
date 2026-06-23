@@ -50,11 +50,11 @@ const Navbar = () => {
             <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <Link to="/" className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-[#5eaf70]/40 bg-[#12311c] shadow-lg shadow-green-950/20">
-                        <img src="/logo.png" alt="FootBattle logo" className="h-full w-full object-cover" />
+                        <img src="/footbattle_logo.svg" alt="CyberFoot logo" className="h-full w-full object-cover" />
                     </div>
                     <div>
                         <div className="font-display text-xl uppercase leading-none text-[#f3fff0]">
-                            FootBattle
+                            CyberFoot
                         </div>
                         <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.24em] text-[#86a08d]">
                             World Cup 2026
