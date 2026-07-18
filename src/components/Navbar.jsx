@@ -57,7 +57,7 @@ const Navbar = () => {
                             CyberFoot
                         </div>
                         <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.24em] text-[#86a08d]">
-                            World Cup 2026
+                            Football Leagues
                         </div>
                     </div>
                 </Link>

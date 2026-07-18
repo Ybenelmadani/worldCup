@@ -581,6 +581,15 @@ const RatingCard = ({ player, index }) => (
     </motion.article>
 );
 
+const LEAGUES = [
+    { code: 'WC', label: '🏆 Mondial' },
+    { code: 'PL', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League' },
+    { code: 'PD', label: '🇪🇸 La Liga' },
+    { code: 'SA', label: '🇮🇹 Serie A' },
+    { code: 'FL1', label: '🇫🇷 Ligue 1' },
+    { code: 'BL1', label: '🇩🇪 Bundesliga' }
+];
+
 const Home = () => {
     const [overview, setOverview] = useState({
         rangeDays: 3,
@@ -607,6 +616,16 @@ const Home = () => {
         liveUnavailable: false
     });
     const [loading, setLoading] = useState(true);
+
+    const [activeTab, setActiveTab] = useState('WC');
+    const [leagueData, setLeagueData] = useState({
+        competition: null,
+        matches: [],
+        standings: [],
+        scorers: []
+    });
+    const [leagueLoading, setLeagueLoading] = useState(false);
+    const [leagueError, setLeagueError] = useState(null);
 
     useEffect(() => {
         const fetchHomeData = async () => {
@@ -663,14 +682,41 @@ const Home = () => {
         };
     }, []);
 
-        const liveMatches = liveCenter.matches || [];
-    const matchesToDisplay = (footballData.matches.length > 0
-        ? mergeMatchCollections(footballData.matches, overview.matches)
-        : overview.matches
+    useEffect(() => {
+        if (activeTab === 'WC') {
+            return;
+        }
+
+        const fetchLeagueData = async () => {
+            setLeagueLoading(true);
+            setLeagueError(null);
+            try {
+                const res = await api.get(`/matches/football-data/leagues/${activeTab}`);
+                if (res.data) {
+                    setLeagueData(res.data);
+                }
+            } catch (err) {
+                console.error(`Error fetching league data for ${activeTab}`, err);
+                setLeagueError('Impossible de charger les données de cette ligue.');
+            } finally {
+                setLeagueLoading(false);
+            }
+        };
+
+        fetchLeagueData();
+    }, [activeTab]);
+
+    const isWC = activeTab === 'WC';
+    const liveMatches = isWC ? (liveCenter.matches || []) : [];
+    const matchesToDisplay = (isWC
+        ? (footballData.matches.length > 0
+            ? mergeMatchCollections(footballData.matches, overview.matches)
+            : overview.matches)
+        : (leagueData.matches || [])
     ).filter(match => match.status !== 'live');
-    const standingsToDisplay = footballData.standings;
-    const topScorers = footballData.scorers.slice(0, 6);
-    const rankedPlayers = overview.topPlayers.slice(0, 6);
+    const standingsToDisplay = isWC ? [] : (leagueData.standings || []);
+    const topScorers = isWC ? footballData.scorers.slice(0, 6) : (leagueData.scorers || []).slice(0, 6);
+    const rankedPlayers = isWC ? overview.topPlayers.slice(0, 6) : [];
     const homeApiUnavailable = apiStatus.overviewUnavailable && apiStatus.footballDataUnavailable;
 
     return (
@@ -683,34 +729,34 @@ const Home = () => {
 
                 <div className="relative w-full">
                     <motion.div
-                        initial={{ opacity: 0, y: 24 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.55 }}
-                        className="w-full"
+                         initial={{ opacity: 0, y: 24 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         transition={{ duration: 0.55 }}
+                         className="w-full"
                     >
                         <div className="relative">
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.96 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.6, delay: 0.15 }}
-                                className="relative overflow-hidden rounded-[18px] border border-[#3c6f49] shadow-[0_40px_120px_-45px_rgba(0,0,0,0.35)]"
+                                 initial={{ opacity: 0, scale: 0.96 }}
+                                 animate={{ opacity: 1, scale: 1 }}
+                                 transition={{ duration: 0.6, delay: 0.15 }}
+                                 className="relative overflow-hidden rounded-[18px] border border-[#3c6f49] shadow-[0_40px_120px_-45px_rgba(0,0,0,0.35)]"
                             >
                                 <video
-                                    className="h-[28rem] w-full object-cover sm:h-[34rem]"
-                                    src="/001 - World_Cup_2026_-_Official_Intro.f398.mp4"
-                                    autoPlay
-                                    muted
-                                    loop
-                                    playsInline
+                                     className="h-[28rem] w-full object-cover sm:h-[34rem]"
+                                     src="/001 - World_Cup_2026_-_Official_Intro.f398.mp4"
+                                     autoPlay
+                                     muted
+                                     loop
+                                     playsInline
                                 />
                                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,20,12,0.22),rgba(7,20,12,0.58))]" />
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(111,219,134,0.16),transparent_26%),radial-gradient(circle_at_80%_18%,rgba(255,255,255,0.10),transparent_18%)]" />
                                 <motion.a
-                                    href="#matches-section"
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: [0, 8, 0] }}
-                                    transition={{ opacity: { duration: 0.5, delay: 0.35 }, y: { duration: 1.8, repeat: Infinity, ease: 'easeInOut' } }}
-                                    className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/15 bg-[rgba(7,20,12,0.48)] px-5 py-3 text-sm font-bold uppercase tracking-[0.24em] text-white backdrop-blur-md transition hover:bg-[rgba(7,20,12,0.68)]"
+                                     href="#matches-section"
+                                     initial={{ opacity: 0, y: 8 }}
+                                     animate={{ opacity: 1, y: [0, 8, 0] }}
+                                     transition={{ opacity: { duration: 0.5, delay: 0.35 }, y: { duration: 1.8, repeat: Infinity, ease: 'easeInOut' } }}
+                                     className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/15 bg-[rgba(7,20,12,0.48)] px-5 py-3 text-sm font-bold uppercase tracking-[0.24em] text-white backdrop-blur-md transition hover:bg-[rgba(7,20,12,0.68)]"
                                 >
                                     <span>Voir plus</span>
                                     <span className="text-lg leading-none">v</span>
@@ -721,10 +767,34 @@ const Home = () => {
                 </div>
             </section>
 
-            <section id="matches-section" className="mx-auto max-w-7xl py-8">
-                {loading ? (
-                    <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-center text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
-                        Chargement du resume Coupe du Monde...
+            <section id="matches-section" className="mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
+                {/* Tabs navigation */}
+                <div className="mb-10 overflow-x-auto pb-3 scrollbar-hide">
+                    <div className="flex gap-3 min-w-max">
+                        {LEAGUES.map((league) => (
+                            <button
+                                key={league.code}
+                                onClick={() => setActiveTab(league.code)}
+                                className={`rounded-full px-5 py-3 text-sm font-bold uppercase tracking-wider transition ${
+                                    activeTab === league.code
+                                        ? 'border border-[#5eaf70]/45 bg-[#173825] text-[#bff0c8] shadow-[0_10px_30px_-10px_rgba(47,143,70,0.4)]'
+                                        : 'border border-[#295b38]/40 bg-[#0b1c12]/60 text-[#d9e9dc] hover:bg-[#173825]/50 hover:text-[#bff0c8]'
+                                }`}
+                            >
+                                {league.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Content display */}
+                {((isWC && loading) || (!isWC && leagueLoading)) ? (
+                    <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-center text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)] animate-pulse">
+                        Chargement des données...
+                    </div>
+                ) : (!isWC && leagueError) ? (
+                    <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-center text-[#d32f2f] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
+                        {leagueError}
                     </div>
                 ) : (
                     <div className="space-y-20">
@@ -742,15 +812,15 @@ const Home = () => {
 
                         <section>
                             <SectionHeader
-                                eyebrow="01"
-                                title="Matches et scores"
+                                 eyebrow="01"
+                                 title="Matches et scores"
                             />
 
                             {matchesToDisplay.length === 0 ? (
                                 <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
-                                    {homeApiUnavailable
+                                    {isWC && homeApiUnavailable
                                         ? 'Connexion au backend impossible pour charger les matchs.'
-                                        : `Aucun match programme sur les ${overview.rangeDays || 3} prochains jours.`}
+                                        : 'Aucun match programmé pour le moment.'}
                                 </div>
                             ) : (
                                 <div className="grid gap-6">
@@ -773,83 +843,63 @@ const Home = () => {
                             )}
                         </section>
 
-        {/* Section Classement masquée - phase de groupes terminée
-        <section className="overflow-hidden rounded-[38px] border border-[#d8ead8] bg-[linear-gradient(180deg,#f8fcf7,#eef7ee)] px-6 py-10 text-[#103a1f] shadow-[0_40px_120px_-60px_rgba(16,58,31,0.18)] md:px-8">
-                            <SectionHeader
-                                eyebrow="02"
-                                title="Classement du tournoi"
-                                subtitle="Le scroll descend maintenant vers les groupes pour garder une lecture naturelle: d abord le terrain, ensuite la hierarchie."
-                            />
-                            <div className="grid gap-5">
-                                {standingsToDisplay.length === 0 ? (
-                                    <div className="rounded-[28px] border border-[#d8ead8] bg-white p-8 text-[#3f5f49] lg:col-span-3">
-                                        <div className="text-sm font-bold uppercase tracking-[0.24em] text-[#2f8f46]">
-                                            aucun classement charge
-                                        </div>
-                                        <div className="mt-3 text-base leading-7 text-[#54705c]">
-                                            {getStandingsMessage(footballData, apiStatus.footballDataUnavailable)}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    standingsToDisplay.map((standing, index) => (
+                        {!isWC && standingsToDisplay.length > 0 && (
+                            <section className="overflow-hidden rounded-[38px] border border-[#d8ead8] bg-[linear-gradient(180deg,#f8fcf7,#eef7ee)] px-6 py-10 text-[#103a1f] shadow-[0_40px_120px_-60px_rgba(16,58,31,0.18)] md:px-8">
+                                <SectionHeader
+                                    eyebrow="02"
+                                    title="Classement du championnat"
+                                />
+                                <div className="grid gap-5">
+                                    {standingsToDisplay.map((standing, index) => (
                                         <StandingsBlock
                                             key={`${standing.group || standing.stage}-${index}`}
                                             standing={standing}
                                             index={index}
                                         />
-                                    ))
-                                )}
-                            </div>
-                        </section>
-        */}
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         <section>
                             <SectionHeader
-                                eyebrow="03"
-                                title="Meilleurs buteurs"
-                                subtitle="Les buteurs arrivent apres le classement pour raconter la competition du collectif vers l individuel."
+                                 eyebrow="03"
+                                 title="Meilleurs buteurs"
+                                 subtitle={isWC ? "Les buteurs arrivent après le classement pour raconter la compétition du collectif vers l'individuel." : "Les meilleurs buteurs du championnat."}
                             />
 
                             {topScorers.length === 0 ? (
                                 <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
-                                    {apiStatus.footballDataUnavailable
-                                        ? 'Les meilleurs buteurs sont indisponibles car le backend ne repond pas.'
-                                        : 'Meilleurs buteurs indisponibles pour le moment.'}
+                                    Meilleurs buteurs indisponibles pour le moment.
                                 </div>
                             ) : (
                                 <div className="grid gap-4 lg:grid-cols-2">
                                     {topScorers.map((player, index) => (
                                         <ScorerCard
-                                            key={`${player.player?.id || player.player?.name}-${index}`}
-                                            player={player}
-                                            index={index}
+                                             key={`${player.player?.id || player.player?.name}-${index}`}
+                                             player={player}
+                                             index={index}
                                         />
                                     ))}
                                 </div>
                             )}
                         </section>
 
-                        <section>
-                            <SectionHeader
-                                eyebrow="04"
-                                title="Top players"
-                                subtitle="Cette derniere partie garde tes notes locales et les met dans une presentation plus nette pour finir la landing en douceur."
-                            />
+                        {isWC && rankedPlayers.length > 0 && (
+                            <section>
+                                <SectionHeader
+                                     eyebrow="04"
+                                     title="Top players"
+                                     subtitle="Cette dernière partie garde tes notes locales et les met dans une présentation plus nette pour finir la landing en douceur."
+                                />
 
-                            {rankedPlayers.length === 0 ? (
-                                <div className="rounded-[32px] border border-[#d8ead8] bg-white px-8 py-16 text-[#54705c] shadow-[0_30px_90px_-60px_rgba(16,58,31,0.16)]">
-                                    {apiStatus.overviewUnavailable
-                                        ? 'Les notes joueurs sont indisponibles car le backend ne repond pas.'
-                                        : 'Les notes joueurs apparaitront des que le backend recoit plus de statistiques.'}
-                                </div>
-                            ) : (
                                 <div className="grid gap-4 lg:grid-cols-2">
                                     {rankedPlayers.map((player, index) => (
                                         <RatingCard key={`${player.name}-${index}`} player={player} index={index} />
                                     ))}
                                 </div>
-                            )}
-                        </section>
+                            </section>
+                        )}
                     </div>
                 )}
             </section>
