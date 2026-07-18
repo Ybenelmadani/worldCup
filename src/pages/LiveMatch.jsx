@@ -372,8 +372,9 @@ const LiveMatch = () => {
                     setIsFallbackData(false);
                     setError('');
                     
-                    if (currentLiveMatch._id) {
-                        api.get(`/matches/${currentLiveMatch._id}/streams`)
+                    const idOrFixture = currentLiveMatch._id || currentLiveMatch.fixtureId;
+                    if (idOrFixture) {
+                        api.get(`/matches/${idOrFixture}/streams`)
                             .then(res => {
                                 const retrieved = res.data.streams || [];
                                 setStreams(retrieved);
@@ -394,8 +395,9 @@ const LiveMatch = () => {
                     setIsFallbackData(true);
                     setError('');
                     
-                    if (fallbackMatch._id) {
-                        api.get(`/matches/${fallbackMatch._id}/streams`)
+                    const idOrFixtureFallback = fallbackMatch._id || fallbackMatch.fixtureId;
+                    if (idOrFixtureFallback) {
+                        api.get(`/matches/${idOrFixtureFallback}/streams`)
                             .then(res => {
                                 const retrieved = res.data.streams || [];
                                 setStreams(retrieved);
