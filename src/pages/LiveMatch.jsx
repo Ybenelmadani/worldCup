@@ -379,7 +379,12 @@ const LiveMatch = () => {
                                 const retrieved = res.data.streams || [];
                                 setStreams(retrieved);
                                 if (retrieved.length > 0) {
-                                    setActiveStream(retrieved[0]);
+                                    setActiveStream(current => {
+                                        if (current && retrieved.some(s => s.url === current.url)) {
+                                            return current;
+                                        }
+                                        return retrieved[0];
+                                    });
                                 }
                             })
                             .catch(err => console.log('Streams IPTV non disponibles', err));
@@ -402,7 +407,12 @@ const LiveMatch = () => {
                                 const retrieved = res.data.streams || [];
                                 setStreams(retrieved);
                                 if (retrieved.length > 0) {
-                                    setActiveStream(retrieved[0]);
+                                    setActiveStream(current => {
+                                        if (current && retrieved.some(s => s.url === current.url)) {
+                                            return current;
+                                        }
+                                        return retrieved[0];
+                                    });
                                 }
                             })
                             .catch(err => console.log('Streams IPTV non disponibles', err));
