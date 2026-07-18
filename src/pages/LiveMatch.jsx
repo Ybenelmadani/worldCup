@@ -185,7 +185,34 @@ const InfoTile = ({ icon, label, value }) => (
 
 const VideoPlayer = ({ url }) => {
     const videoRef = useRef(null);
+    const containerRef = useRef(null);
     const [hlsError, setHlsError] = useState('');
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
+    const toggleFullScreen = () => {
+        const container = containerRef.current;
+        if (!document.fullscreenElement) {
+            if (container?.requestFullscreen) {
+                container.requestFullscreen().catch(err => console.log(err));
+            } else if (container?.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    };
 
     useEffect(() => {
         const video = videoRef.current;
@@ -269,13 +296,53 @@ const VideoPlayer = ({ url }) => {
     }
 
     return (
-        <video
-            ref={videoRef}
-            controls
-            autoPlay
-            playsInline
-            className="h-full w-full object-contain"
-        />
+        <div ref={containerRef} className="relative h-full w-full bg-black group" onDoubleClick={toggleFullScreen}>
+            <style>{`
+                video::-webkit-media-controls-fullscreen-button {
+                    display: none !important;
+                }
+            `}</style>
+            <video
+                ref={videoRef}
+                controls
+                autoPlay
+                playsInline
+                className="h-full w-full object-contain"
+            />
+            
+            {/* Bouton Plein Ecran Personnalise */}
+            <button 
+                onClick={toggleFullScreen}
+                className="absolute bottom-3 right-3 z-30 flex items-center justify-center rounded bg-black/40 p-1.5 text-white shadow-sm hover:bg-black/60 transition sm:bottom-4 sm:right-4"
+                title="Plein ecran"
+            >
+                {isFullscreen ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-5 w-5 sm:h-6 sm:w-6">
+                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                    </svg>
+                ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-5 w-5 sm:h-6 sm:w-6">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                    </svg>
+                )}
+            </button>
+
+            {/* Overlay en haut a droite pour masquer le logo Bein Sports */}
+            <div className="pointer-events-none absolute top-6 right-6 z-10 flex h-12 w-40 items-center justify-center gap-2 bg-black sm:top-8 sm:right-10 sm:h-16 sm:w-56">
+                <img src="/footbattle_logo.svg" alt="CyberFoot Logo" className="h-6 w-auto sm:h-8" />
+                <span className="font-display text-lg font-black tracking-wide text-white sm:text-xl">CyberFoot</span>
+            </div>
+            {/* Overlay en bas a gauche pour masquer le logo Yacine TV (tres ajuste) */}
+            <div className="pointer-events-none absolute bottom-6 left-2 z-10 flex flex-col items-start gap-1 sm:bottom-8 sm:left-4">
+                {/* Logo sans fond au-dessus du barcode */}
+                <img src="/footbattle_logo.svg" alt="CyberFoot Logo" className="h-10 w-10 object-contain ml-1 sm:h-14 sm:w-14 sm:ml-2" />
+                
+                {/* Texte au-dessus de Yacine TV avec un fond noir tres serre */}
+                <div className="flex items-center justify-center bg-black px-3 py-1">
+                    <span className="font-display text-[10px] font-black tracking-widest text-white sm:text-xs">CyberFoot</span>
+                </div>
+            </div>
+        </div>
     );
 };
 

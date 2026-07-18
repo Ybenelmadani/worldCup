@@ -773,6 +773,7 @@ const Home = () => {
                             )}
                         </section>
 
+        {/* Section Classement masquée - phase de groupes terminée
         <section className="overflow-hidden rounded-[38px] border border-[#d8ead8] bg-[linear-gradient(180deg,#f8fcf7,#eef7ee)] px-6 py-10 text-[#103a1f] shadow-[0_40px_120px_-60px_rgba(16,58,31,0.18)] md:px-8">
                             <SectionHeader
                                 eyebrow="02"
@@ -800,6 +801,7 @@ const Home = () => {
                                 )}
                             </div>
                         </section>
+        */}
 
                         <section>
                             <SectionHeader
