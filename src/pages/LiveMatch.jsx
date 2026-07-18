@@ -90,6 +90,12 @@ const IconWhistle = () => (
     </svg>
 );
 
+const hasStats = (match) => (
+    (match?.goals?.length > 0) ||
+    (match?.topPlayers?.length > 0) ||
+    !!match?.manOfTheMatch?.name
+);
+
 const buildGoalTimeline = (goals = [], homeTeam, awayTeam) => {
     let homeScore = 0;
     let awayScore = 0;
@@ -508,11 +514,13 @@ const LiveMatch = () => {
                             </div>
                         </section>
 
-                        <div className="grid gap-4 md:grid-cols-3">
-                            <StatChip icon={<IconBall />} label="Buteurs" value={match.goals?.length || 0} />
-                            <StatChip icon={<IconUser />} label="Joueurs notes" value={match.topPlayers?.length || 0} />
-                            <StatChip icon={<IconTrophy />} label="MVP" value={match.manOfTheMatch?.name || 'en attente'} highlight />
-                        </div>
+                        {hasStats(match) && (
+                            <div className="grid gap-4 md:grid-cols-3">
+                                <StatChip icon={<IconBall />} label="Buteurs" value={match.goals?.length || 0} />
+                                <StatChip icon={<IconUser />} label="Joueurs notes" value={match.topPlayers?.length || 0} />
+                                <StatChip icon={<IconTrophy />} label="MVP" value={match.manOfTheMatch?.name || 'en attente'} highlight />
+                            </div>
+                        )}
 
                         {/* Embedded HLS Live Stream Player */}
                         {activeStream ? (
@@ -583,16 +591,16 @@ const LiveMatch = () => {
                             )}
                         </div>
 
-                        <section className="rounded-[32px] border border-[#1c4127] bg-[rgba(8,22,13,0.82)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
-                            <div className="mb-5 flex items-center justify-between gap-3">
-                                <div>
-                                    <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">Temps forts</div>
-                                    <div className="mt-2 text-2xl font-black text-white">Moments du match</div>
+                        {timeline.length > 0 && (
+                            <section className="rounded-[32px] border border-[#1c4127] bg-[rgba(8,22,13,0.82)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
+                                <div className="mb-5 flex items-center justify-between gap-3">
+                                    <div>
+                                        <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">Temps forts</div>
+                                        <div className="mt-2 text-2xl font-black text-white">Moments du match</div>
+                                    </div>
+                                    <div className="text-sm text-[#a8bcae]">Voir tout</div>
                                 </div>
-                                <div className="text-sm text-[#a8bcae]">Voir tout</div>
-                            </div>
 
-                            {timeline.length > 0 ? (
                                 <div className="space-y-3">
                                     {timeline.map((goal, index) => (
                                         <div key={goal.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[24px] border border-[#1d4127] bg-[rgba(6,18,11,0.62)] px-4 py-4">
@@ -611,42 +619,36 @@ const LiveMatch = () => {
                                         </div>
                                     ))}
                                 </div>
-                            ) : (
-                                <div className="rounded-[24px] border border-dashed border-[#295437] bg-[rgba(7,20,12,0.42)] px-4 py-5 text-[#a7bcae]">
-                                    Aucun temps fort detaille disponible pour le moment.
-                                </div>
-                            )}
-                        </section>
+                            </section>
+                        )}
 
-                        <section className="rounded-[32px] border border-[#1c4127] bg-[rgba(8,22,13,0.82)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
-                            <div className="mb-5 flex items-center justify-between gap-3">
-                                <div>
-                                    <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">Meilleurs joueurs</div>
-                                    <div className="mt-2 text-2xl font-black text-white">Top players</div>
+                        {featuredPlayers.length > 0 && (
+                            <section className="rounded-[32px] border border-[#1c4127] bg-[rgba(8,22,13,0.82)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
+                                <div className="mb-5 flex items-center justify-between gap-3">
+                                    <div>
+                                        <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">Meilleurs joueurs</div>
+                                        <div className="mt-2 text-2xl font-black text-white">Top players</div>
+                                    </div>
+                                    <div className="text-sm text-[#a8bcae]">Voir tout</div>
                                 </div>
-                                <div className="text-sm text-[#a8bcae]">Voir tout</div>
-                            </div>
 
-                            {featuredPlayers.length > 0 ? (
                                 <div className="grid gap-4 lg:grid-cols-3">
                                     {featuredPlayers.map((player, index) => (
                                         <PlayerCard key={`${player.name}-${index}`} player={player} highlight={index === 0} />
                                     ))}
                                 </div>
-                            ) : (
-                                <div className="rounded-[24px] border border-dashed border-[#295437] bg-[rgba(7,20,12,0.42)] px-4 py-5 text-[#a7bcae]">
-                                    Les notes joueurs du direct ne sont pas encore revenues.
-                                </div>
-                            )}
-                        </section>
+                            </section>
+                        )}
 
-                        <section className="rounded-[32px] border border-[#1c4127] bg-[rgba(8,22,13,0.82)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
-                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                {matchStats.map((item) => (
-                                    <MetricTile key={item.label} label={item.label} value={item.value} team={item.team} />
-                                ))}
-                            </div>
-                        </section>
+                        {hasStats(match) && (
+                            <section className="rounded-[32px] border border-[#1c4127] bg-[rgba(8,22,13,0.82)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
+                                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                    {matchStats.map((item) => (
+                                        <MetricTile key={item.label} label={item.label} value={item.value} team={item.team} />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         <section className="rounded-[32px] border border-[#1c4127] bg-[rgba(8,22,13,0.82)] p-5 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.4)] sm:p-6">
                             <div className="mb-5 text-xs font-bold uppercase tracking-[0.28em] text-[#7dc38d]">Infos du match</div>
